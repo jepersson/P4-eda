@@ -1,0 +1,158 @@
+--
+title: "EDA lesson notes"
+--
+
+# Lesson 4, Problem Set: Explore One Variable
+
+Start by loading necessary modules and the diamonds data set from ggplot
+package.
+
+```{r}
+
+library(ggplot2)
+data(diamonds)
+summary(diamonds)
+
+```
+
+More info about the diamonds data set are available as well.
+
+```{r}
+
+?diamonds
+
+```
+
+We can see the number of observations and the number of variables by using the
+`dim()` function.
+
+```{r}
+
+dim(diamonds)
+
+```
+
+Variables in the data set can be accessed using the `$` operator. Accessing
+categorical variables this way also gives a short explanation about the
+variable levels.
+
+```{r}
+
+diamonds$cut
+
+```
+
+To check how many diamonds there are in different price classes use vector
+subsetting and the `len()` function.
+
+```{r}
+
+cheap_diamonds <- diamonds$price[diamonds$price < 500]
+length(cheap_diamonds)
+
+very_cheap_diamonds <- diamonds$price[diamonds$price < 250]
+length(very_cheap_diamonds)
+
+expensive_diamonds <- diamonds$price[diamonds$price > 15000]
+length(expensive_diamonds)
+
+```
+
+Now for some graphics.
+
+Create a histogram of the price of all the diamonds in the diamond data set.
+Also write out summary statistics for good measure.
+
+```{r}
+
+qplot(price, data = diamonds, geom = "histogram")
+summary(diamonds$price)
+
+```
+
+Explore the largest peak in the
+price histogram created earlier.
+
+Try limiting the x-axis, altering the bin width,
+and setting different breaks on the x-axis.
+
+```{r}
+
+qplot(price, data = diamonds, geom = "histogram", bins = 50) +
+scale_x_continuous(limits = c(300,1500), breaks = seq(300,1500,100)) 
+
+```
+
+Break out the histogram of diamond prices by cut. Use the `scales = "free"`
+parameter to avoid forcing the same Y axis for all plots.
+
+```{r}
+
+qplot(x = price, data = diamonds, geom = "histogram", bins = 50) +
+facet_wrap(~cut, ncol = 3, scales = "free")
+by(diamonds$price, diamonds$cut, summary)
+
+```
+
+Create a histogram of price per carat and facet it by cut. Make adjustments to
+the code from the previous exercise to get started. (Changing to using qqplot
+from this exercise onwards.)
+
+```{r}
+
+ggplot(aes(x = price/carat), data = diamonds) + 
+  geom_histogram(binwidth = 0.03) + 
+  scale_x_log10() + 
+  facet_wrap(~cut, scales = "free")
+
+```
+
+Investigate the price of diamonds using box plots,
+numerical summaries, and the color variable.
+
+```{r}
+
+ggplot(aes(x = color, y = price), data = diamonds) + 
+    geom_boxplot()
+
+```
+
+Use the `IQR()` function and find the different interquartile ranges.
+
+```{r}
+
+# Creating vector with prices for "D" diamonds
+diamond_price_d <- subset(diamonds, color == "D")$price
+
+# Creating vector with prices for "J" diamonds
+diamond_price_j <- subset(diamonds, color == "J")$price
+
+# Calculating first and third quartile by splitting vector in middle and taking the median.
+median_d <- median(diamond_price_d)
+median(subset(diamond_price_d, diamond_price_d <= median_d))
+median(subset(diamond_price_d, diamond_price_d > median_d))
+
+# Calculating first and third quartile by splitting vector in middle and taking the median.
+median_j <- median(diamond_price_j)
+median(subset(diamond_price_j, diamond_price_j <= median_j))
+median(subset(diamond_price_j, diamond_price_j > median_j))
+
+# IQR for both types of diamonds
+IQR(diamond_price_d)
+IQR(diamond_price_j)
+
+```
+
+Using boxplot to plot the relationship between price per carat and diamond color.
+
+```{r}
+
+qplot(color, price/carat, data = diamonds, geom = "boxplot")
+
+```
+
+Now we will be using a frequency polygon to investigate the diamonds carat variable.
+
+```{r}
+
+```
