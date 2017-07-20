@@ -1,0 +1,469 @@
+---
+title: "EDA lesson notes"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lesson 4, Problem Set: Explore One Variable
+
+Start by loading necessary modules and the diamonds data set from ggplot
+package.
+
+```{r}
+
+library(ggplot2)
+data(diamonds)
+summary(diamonds)
+
+```
+
+More info about the diamonds data set are available as well.
+
+```{r}
+
+?diamonds
+
+```
+
+We can see the number of observations and the number of variables by using the
+`dim()` function.
+
+```{r}
+
+dim(diamonds)
+
+```
+
+Variables in the data set can be accessed using the `$` operator. Accessing
+categorical variables this way also gives a short explanation about the
+variable levels.
+
+```{r}
+
+diamonds$cut
+
+```
+
+To check how many diamonds there are in different price classes use vector
+subsetting and the `len()` function.
+
+```{r}
+
+cheap_diamonds <- diamonds$price[diamonds$price < 500]
+length(cheap_diamonds)
+
+very_cheap_diamonds <- diamonds$price[diamonds$price < 250]
+length(very_cheap_diamonds)
+
+expensive_diamonds <- diamonds$price[diamonds$price > 15000]
+length(expensive_diamonds)
+
+```
+
+Now for some graphics.
+
+Create a histogram of the price of all the diamonds in the diamond data set.
+Also write out summary statistics for good measure.
+
+```{r}
+
+qplot(price, data = diamonds, geom = "histogram")
+summary(diamonds$price)
+
+```
+
+Explore the largest peak in the
+price histogram created earlier.
+
+Try limiting the x-axis, altering the bin width,
+and setting different breaks on the x-axis.
+
+```{r}
+
+qplot(price, data = diamonds, geom = "histogram", bins = 50) +
+scale_x_continuous(limits = c(300,1500), breaks = seq(300,1500,100)) 
+
+```
+
+Break out the histogram of diamond prices by cut. Use the `scales = "free"`
+parameter to avoid forcing the same Y axis for all plots.
+
+```{r}
+
+qplot(x = price, data = diamonds, geom = "histogram", bins = 50) +
+facet_wrap(~cut, ncol = 3, scales = "free")
+by(diamonds$price, diamonds$cut, summary)
+
+```
+
+Create a histogram of price per carat and facet it by cut. Make adjustments to
+the code from the previous exercise to get started. (Changing to using qqplot
+from this exercise onwards.)
+
+```{r}
+
+ggplot(aes(x = price/carat), data = diamonds) + 
+  geom_histogram(binwidth = 0.03) + 
+  scale_x_log10() + 
+  facet_wrap(~cut, scales = "free")
+
+```
+
+Investigate the price of diamonds using box plots,
+numerical summaries, and the color variable.
+
+```{r}
+
+ggplot(aes(x = color, y = price), data = diamonds) + 
+    geom_boxplot()
+
+```
+
+Use the `IQR()` function and find the different interquartile ranges.
+
+```{r}
+
+# Creating vector with prices for "D" diamonds
+diamond_price_d <- subset(diamonds, color == "D")$price
+
+# Creating vector with prices for "J" diamonds
+diamond_price_j <- subset(diamonds, color == "J")$price
+
+# Calculating first and third quartile by splitting vector in middle and taking the median.
+median_d <- median(diamond_price_d)
+median(subset(diamond_price_d, diamond_price_d <= median_d))
+median(subset(diamond_price_d, diamond_price_d > median_d))
+
+# Calculating first and third quartile by splitting vector in middle and taking the median.
+median_j <- median(diamond_price_j)
+median(subset(diamond_price_j, diamond_price_j <= median_j))
+median(subset(diamond_price_j, diamond_price_j > median_j))
+
+# IQR for both types of diamonds
+IQR(diamond_price_d)
+IQR(diamond_price_j)
+
+```
+
+Using boxplot to plot the relationship between price per carat and diamond color.
+
+```{r}
+
+qplot(color, price/carat, data = diamonds, geom = "boxplot")
+
+```
+
+Now we will be using a frequency polygon to investigate the diamonds carat variable.
+
+```{r}
+
+qplot(data = diamonds, x = carat, geom = "freqpoly", binwidth = 0.05) + 
+  scale_x_continuous(breaks=seq(0,5,0.2))
+
+```
+
+
+Loading a dataset from gapminder containing unemployment data from almost 200 different countries under more than 15 years. Skipping the last row in the file since it is empty.
+
+```{r}
+
+library("readr")
+
+# Setting explicit columns since last column is not correctly formatted.
+# Likewise only reading in the first 178 rows since last row is empty.
+employment_data <- read_csv("employment_above_15.csv",
+                            col_names = c("country",
+                                          "1991",
+                                          "1992",
+                                          "1993",
+                                          "1994",
+                                          "1995",
+                                          "1996",
+                                          "1997",
+                                          "1998",
+                                          "1999",
+                                          "2000",
+                                          "2001",
+                                          "2002",
+                                          "2003",
+                                          "2004",
+                                          "2005",
+                                          "2006",
+                                          "2007",
+                                          "NA"),
+                            col_types = cols("country" = col_character(),
+                                             "1991" = col_double(),
+                                             "1992" = col_double(),
+                                             "1993" = col_double(),
+                                             "1994" = col_double(),
+                                             "1995" = col_double(),
+                                             "1996" = col_double(),
+                                             "1997" = col_double(),
+                                             "1998" = col_double(),
+                                             "1999" = col_double(),
+                                             "2000" = col_double(),
+                                             "2001" = col_double(),
+                                             "2002" = col_double(),
+                                             "2003" = col_double(),
+                                             "2004" = col_double(),
+                                             "2005" = col_double(),
+                                             "2006" = col_double(),
+                                             "2007" = col_double(),
+                                             "NA" = col_skip()),
+                            skip = 1,
+                            n_max = 178)
+
+employment_data
+
+```
+
+Tyding up the data by adding years as a variable.
+
+```{r}
+
+library(tidyr)
+employment_data <- gather(employment_data, 
+                          "1991",    
+                          "1992",    
+                          "1993",    
+                          "1994",    
+                          "1995",    
+                          "1996",    
+                          "1997",    
+                          "1998",    
+                          "1999",    
+                          "2000",    
+                          "2001",    
+                          "2002",    
+                          "2003",    
+                          "2004",    
+                          "2005",    
+                          "2006",    
+                          "2007",    
+                          key = "year", 
+                          value = "employment_rate")
+head(employment_data)
+```
+
+Print out countries with the highest average employment in the data set.
+
+```{r}
+
+library(dplyr)
+
+avg_employment_rate <- employment_data %>%
+  group_by(country) %>%
+  summarise(average_employment = mean(employment_rate))
+
+top_n(avg_employment_rate, 5, average_employment)
+
+```
+... and the lowest.
+
+```{r}
+
+top_n(avg_employment_rate, -5, average_employment)
+
+```
+
+Plot line graph of all countries data.
+
+```{r}
+# ggplot(data=melted, aes(x=time, y=value, group=variable)) + geom_line()
+
+ggplot(data = employment_data, 
+       aes(x = year,  y = employment_rate, group = country)) + 
+  geom_line()
+  
+```
+
+A bit too messy let's instead plot the top five countries 1991 and the top five countries 2007 over the total time of the data set timeline.
+
+```{r}
+
+top_5_1991 <- employment_data %>% 
+  filter(year == "1991") %>% 
+  arrange(employment_rate) %>% 
+  top_n(5)
+
+top_5_2007 <- employment_data %>% 
+  filter(year == "2007") %>% 
+  arrange(employment_rate) %>% 
+  top_n(5)
+
+top_countries <- union(top_5_1991, top_5_2007)["country"]
+employment_data_of_interest <- inner_join(top_countries, employment_data)
+
+ggplot(data = employment_data_of_interest, 
+       aes(x = year,  y = employment_rate, group = country, color = country)) + 
+  geom_line()
+
+```
+
+Creating a new data frame containing one variable which is the employment rate for people between 15 and 24 specifically.
+
+```{r}
+
+employment_data_15_to_24 <- read_csv("employment_15_to_24.csv",
+                                     col_names = c("country",
+                                                   "1991",
+                                                   "1992",
+                                                   "1993",
+                                                   "1994",
+                                                   "1995",
+                                                   "1996",
+                                                   "1997",
+                                                   "1998",
+                                                   "1999",
+                                                   "2000",
+                                                   "2001",
+                                                   "2002",
+                                                   "2003",
+                                                   "2004",
+                                                   "2005",
+                                                   "2006",
+                                                   "2007",
+                                                   "NA"),
+                                     col_types = cols("country" = col_character(),
+                                                      "1991" = col_double(),
+                                                      "1992" = col_double(),
+                                                      "1993" = col_double(),
+                                                      "1994" = col_double(),
+                                                      "1995" = col_double(),
+                                                      "1996" = col_double(),
+                                                      "1997" = col_double(),
+                                                      "1998" = col_double(),
+                                                      "1999" = col_double(),
+                                                      "2000" = col_double(),
+                                                      "2001" = col_double(),
+                                                      "2002" = col_double(),
+                                                      "2003" = col_double(),
+                                                      "2004" = col_double(),
+                                                      "2005" = col_double(),
+                                                      "2006" = col_double(),
+                                                      "2007" = col_double(),
+                                                      "NA" = col_skip()),
+                                     skip = 1,
+                                     n_max = 178)
+
+employment_data_15_to_24 <- gather(employment_data_15_to_24, 
+                                   "1991",    
+                                   "1992",    
+                                   "1993",    
+                                   "1994",    
+                                   "1995",    
+                                   "1996",    
+                                   "1997",    
+                                   "1998",    
+                                   "1999",    
+                                   "2000",    
+                                   "2001",    
+                                   "2002",    
+                                   "2003",    
+                                   "2004",    
+                                   "2005",    
+                                   "2006",    
+                                   "2007",    
+                                   key = "year", 
+                                   value = "employment_rate")
+
+employment_data_15_to_24_of_interest <- inner_join(top_countries, 
+                                                   employment_data_15_to_24)
+
+# join together the new and old dataframes.
+
+employment_data_of_interest <- left_join(employment_data_of_interest,
+                                         employment_data_15_to_24_of_interest, 
+                                         by = c("country", "year"),
+                                         suffix = c("_all", "_15_to_24"))
+
+employment_data_of_interest <- gather(employment_data_of_interest,
+                                      "employment_rate_all",
+                                      "employment_rate_15_to_24",
+                                      key = "group",
+                                      value = "employment_rate")
+
+```
+
+Plotting the result against the employment rate for all ages.
+
+```{r}
+
+ggplot(data = employment_data_of_interest, 
+       aes(x = year,  y = employment_rate, group = country, color = country)) + 
+  geom_line() +
+  facet_grid(group ~ .)
+
+```
+
+Now let's check out the birthdays of our imaginary facebook friends.
+Start by reading in the data.
+
+```{r}
+
+library(readr)
+
+birthdays <- read_csv("birthdaysExample.csv")
+birthdays$dates <- as.Date(parse_date(birthdays$dates, "%m/%d/%y"))
+
+```
+
+Let's answer the following questions.
+
+* How many people share your birthday? Do you know them?
+  (Reserve time with them or save money to buy them a gift!)
+
+```{r}
+
+subset(birthdays, dates == dmy("030514"))
+
+```
+
+Actually no one does share my birthday...
+
+
+* Which month contains the most number of birthdays?
+* How many birthdays are in each month?
+
+```{r}
+
+qplot(x = month(dates), data = birthdays, geom = "histogram", binwidth = 1) + 
+  scale_x_continuous(breaks = seq(0, 12, 1)) +
+  stat_bin(binwidth = 1, geom='text', aes(label= ..count.. ) , color="white" ,vjust = 1.5) +
+  labs(y = "Number of birthdays", x = "Month")
+
+```
+
+March seems to be the winner with 98 birthdays.
+
+
+* Which day of the year has the most number of birthdays?
+
+```{r}
+
+top_birthday <- birthdays %>% 
+  group_by(days = yday(birthdays$dates)) %>% 
+  count(days) %>% 
+  ungroup() %>% 
+  top_n(1)
+
+as.Date(top_birthday$days - 1, origin = "2014-01-01")
+```
+
+It is a tie between the above three.
+
+
+* Do you have at least 365 friends that have birthdays on everyday
+  of the year?
+
+```{r}
+
+length(unique(birthdays$dates))
+
+```
+
+We only have 348 unique values in our data set meaning that there aren't enought unique birthdays to fill up with at least one per day.
+
