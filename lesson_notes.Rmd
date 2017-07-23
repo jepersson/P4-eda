@@ -48,7 +48,7 @@ diamonds$cut
 ```
 
 To check how many diamonds there are in different price classes use vector
-subsetting and the `len()` function.
+sub-setting and the `len()` function.
 
 ```{r}
 
@@ -100,8 +100,8 @@ by(diamonds$price, diamonds$cut, summary)
 ```
 
 Create a histogram of price per carat and facet it by cut. Make adjustments to
-the code from the previous exercise to get started. (Changing to using qqplot
-from this exercise onwards.)
+the code from the previous exercise to get started. (Changing to using ggplot
+from this exercise onward.)
 
 ```{r}
 
@@ -148,7 +148,7 @@ IQR(diamond_price_j)
 
 ```
 
-Using boxplot to plot the relationship between price per carat and diamond color.
+Using box plot to plot the relationship between price per carat and diamond color.
 
 ```{r}
 
@@ -166,7 +166,7 @@ qplot(data = diamonds, x = carat, geom = "freqpoly", binwidth = 0.05) +
 ```
 
 
-Loading a dataset from gapminder containing unemployment data from almost 200 different countries under more than 15 years. Skipping the last row in the file since it is empty.
+Loading a data set from gapminder containing unemployment data from almost 200 different countries under more than 15 years. Skipping the last row in the file since it is empty.
 
 ```{r}
 
@@ -399,7 +399,7 @@ ggplot(data = employment_data_of_interest,
 
 ```
 
-Now let's check out the birthdays of our imaginary facebook friends.
+Now let's check out the birthdays of our imaginary Facebook friends.
 Start by reading in the data.
 
 ```{r}
@@ -465,5 +465,234 @@ length(unique(birthdays$dates))
 
 ```
 
-We only have 348 unique values in our data set meaning that there aren't enought unique birthdays to fill up with at least one per day.
+We only have 348 unique values in our data set meaning that there aren't enough unique birthdays to fill up with at least one per day.
 
+# Lesson 6, Problem Set: Explore Two Variables
+
+Create a scatter plot of price vs x using the ggplot syntax.
+
+```{r}
+
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(y = price, x = x), 
+              size = 0.25,
+              alpha = 0.2)
+
+```
+
+Calculate the correlation between price and x,y,z respectively.
+
+```{r}
+
+cor.test(diamonds$price, diamonds$x)
+cor.test(diamonds$price, diamonds$y)
+cor.test(diamonds$price, diamonds$z)
+
+```
+
+Now let's proceed with another scatter plot showing price vs. depth.
+
+```{r}
+
+ggplot(diamonds) +
+  geom_point(aes(depth, price), alpha = 0.01) +
+  scale_x_continuous(breaks = seq(40, 80, 2))
+
+```
+
+
+The correlation for the two variables are:
+
+```{r}
+
+cor.test(diamonds$price, diamonds$depth)
+
+```
+
+Proceeding with creating a scatter plot for price vs carat and omitting the top 1% values.
+
+```{r}
+
+# Start with figuring out the 99 percentile for both price and carats before start plotting
+price_99pt <- quantile(diamonds$price, 0.99)
+carat_99pt <- quantile(diamonds$carat, 0.99)
+
+# Then use the values to plot a subset of our diamonds data set
+ggplot(subset(diamonds, price < price_99pt & carat < carat_99pt)) +
+  geom_point(aes(carat, price), 
+             size = 0.25,
+             alpha = 0.2)
+
+```
+
+Next, let's plot the price vs volume estimated by our data set's x,y,z values.
+
+```{r}
+
+my_diamonds <- diamonds %>% 
+  mutate(volume = x * y * z)
+
+# We have some pesky outliers so repeating the trick from the previous plot with shaving of the top 1%.
+price_99pt <- quantile(my_diamonds$price, 0.99)
+volume_99pt <- quantile(my_diamonds$volume, 0.99)
+
+# Then use the values to plot a subset of our diamonds data set
+ggplot(subset(my_diamonds, price < price_99pt & volume < volume_99pt)) +
+  geom_point(aes(volume, price),
+             size = 0.25,
+             alpha = 0.2)
+
+```
+
+Calculating the correlation between price and volume while ignoring outliers (volume = 0 or volume >= 800)
+
+```{r}
+
+cor.test(subset(my_diamonds, volume > 0 & volume < 800)$volume, 
+         subset(my_diamonds, volume > 0 & volume < 800)$price)
+
+```
+
+Let's plot the data again, this time with the 0 < volume < 800 subset.
+
+```{r}
+
+ggplot(subset(my_diamonds, volume > 0 & volume < 800)) +
+  geom_point(aes(volume, price), size = 0.25, alpha = 0.2) +
+  geom_smooth(aes(volume, price), method = lm, size = 0.5) +
+  scale_x_continuous(limits = c(0, 800)) +
+  scale_y_continuous(limits = c(0, 20000))
+
+```
+
+
+Creating a new data frame containing data about our diamonds by clarity.
+the data frame should contain the following variables.
+  (1) mean_price
+  (2) median_price
+  (3) min_price
+  (4) max_price
+  (5) n
+
+```{r}
+
+diamondsByClarity <- diamonds %>%
+  group_by(clarity) %>%
+  summarise(mean_price = mean(price),
+            median_price = median(price),
+            min_price = min(price),
+            max_price = max(price),
+            n = n()) %>%
+  arrange(clarity)
+
+```
+
+Making bar charts for diamond color and clarity.
+
+```{r}
+
+data(diamonds)
+library(gridExtra)
+
+diamonds_by_clarity <- group_by(diamonds, clarity)
+diamonds_mp_by_clarity <- summarise(diamonds_by_clarity, mean_price = mean(price))
+
+diamonds_by_color <- group_by(diamonds, color)
+diamonds_mp_by_color <- summarise(diamonds_by_color, mean_price = mean(price))
+
+mp_by_clarity_bar_chart <- ggplot(diamonds_mp_by_clarity) +
+  geom_col(aes(clarity, mean_price))
+
+mp_by_color_bar_chart <- ggplot(diamonds_mp_by_color) +
+  geom_col(aes(color, mean_price))
+
+grid.arrange(mp_by_clarity_bar_chart, mp_by_color_bar_chart)
+
+```
+
+# Lesson 8: Explore many variables
+
+Starting with creating a set of histograms over the diamond prices using logarithmic x axis and colors depending on cut. 
+
+```{r}
+
+ggplot(diamonds) +
+  geom_histogram(aes(price, fill = cut)) +
+  facet_wrap(~color) +
+  scale_x_log10() +
+  scale_fill_brewer(type = "qual")
+
+```
+
+Next up is a scatter plot of price vs table and colors by cut.
+
+```{r}
+
+ggplot(diamonds) +
+  geom_point(aes(table, price, color = cut)) +
+  scale_x_continuous(limits = c(45, 85), breaks = seq(50, 80, 2)) +
+  scale_color_brewer(type = "qual")
+
+```
+
+
+NEXT SCATTERPLOT!
+This time we scatter plot the price vs volume (x * y * z) colors is decided by the diamonds clarity.
+
+```{r}
+
+diamonds <- diamonds %>% mutate(volume = x*y*z)
+volume_99pt <- quantile(diamonds$volume, 0.99)
+
+ggplot(subset(diamonds, volume > 0 & volume < volume_99pt)) +
+  geom_point(aes(volume, price, color = clarity)) +
+  scale_y_log10() +
+  scale_color_brewer(type = "div")
+
+```
+
+Adding the pseudo Facebook data set and also adds a variable for the proportions of friendships the user has initiated.
+
+```{r}
+
+pf <- read.delim('pseudo_facebook.tsv')
+
+pf <- pf %>% 
+  mutate(prop_initiated = friendships_initiated / friend_count)
+
+pf <- pf %>% 
+  mutate(year_joined.bucket = cut(2014-tenure/365, c(2004, 2009, 2011, 2012, 2014)))
+
+```
+
+Creating a line graph of the the median proportion of friendships initiated.
+
+```{r}
+
+prop_vs_tenure_plot <- ggplot(pf) +
+  geom_line(aes(tenure, prop_initiated, color = year_joined.bucket), 
+            stat = "summary", fun.y = "median")
+
+prop_vs_tenure_plot
+
+```
+
+Now, add a smoother to the above plot.
+
+```{r}
+
+prop_vs_tenure_plot +
+  geom_smooth(aes(tenure, prop_initiated))
+
+```
+
+Back to the diamonds and to creating a scatterplot of price/carat vs cut colored by colors and faceted by clarity.
+
+```{r}
+
+ggplot(diamonds) +
+  geom_jitter(aes(cut, price/carat, color = color)) +
+  facet_wrap(~ clarity) +
+  scale_color_brewer(type = "div")
+
+```
