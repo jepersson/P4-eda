@@ -23,17 +23,80 @@ a margin line to help you keep track of this guideline!
 # for other code chunks once you have verified that each plot comes out as you
 # want it to. This will clean up the flow of your report.
 
-library(ggplot2)
+library(tidyverse)
+
 ```
 
 ```{r echo=FALSE, Load_the_Data}
-# Load the Data
+# Load the Data by reading just the columns we would like to use and giving them
+# a suitable data type.
+loan_data <- read_csv("data/prosperLoanData.csv",
+                      col_types = cols_only(
+                        "ListingCreationDate" = col_datetime(),
+                        "Term" = col_integer(),
+                        "LoanStatus" = col_character(),
+                        "ClosedDate" = col_datetime(),
+                        "ListingCategory (numeric)" = col_integer(),
+                        "Occupation" = col_character(),
+                        "EmploymentStatus" = col_character(),
+                        "EmploymentStatusDuration" =  col_integer(),
+                        "IsBorrowerHomeowner" = col_logical(),
+                        "CurrentlyInGroup" = col_logical(),
+                        "DebtToIncomeRatio" = col_double(),
+                        "IncomeRange" = col_character(),
+                        "TotalProsperLoans" = col_integer(),
+                        "LoanOriginalAmount" = col_integer(),
+                        "LoanOriginationDate" = col_datetime(), 
+                        "MonthlyLoanPayment" = col_double(),
+                        "BorrowerRate" = col_double(),
+                        "InvestmentFromFriendsCount" = col_integer(),
+                        "InvestmentFromFriendsAmount" = col_double(),
+                        "Investors" = col_integer()
+                      ))
+
+# Replace NA values in the EmploymentStatusDuration and TotalProsperLoans
+# variables with zeros.
+loan_data <- loan_data %>% 
+  replace_na(list(EmploymentStatusDuration = 0, TotalProsperLoans = 0))
+
+# Translating the numeric ListingCategory values to readable string data.
+listingCategory <- tribble(~"ListingCategory (numeric)", ~"ListingCategory",
+                           0, NA, 
+                           1, "Debt Consolidation", 
+                           2, "Home Improvement", 
+                           3, "Business", 
+                           4, "Personal Loan", 
+                           5, "Student Use", 
+                           6, "Auto", 
+                           7, "Other", 
+                           8, "Baby&Adoption", 
+                           9, "Boat", 
+                           10, "Cosmetic Procedure", 
+                           11, "Engagement Ring", 
+                           12, "Green Loans", 
+                           13, "Household Expenses", 
+                           14, "Large Purchases", 
+                           15, "Medical/Dental", 
+                           16, "Motorcycle", 
+                           17, "RV", 
+                           18, "Taxes", 
+                           19, "Vacation", 
+                           20, "Wedding Loans")
+	
+loan_data %>% left_join(listingCategory, by = "ListingCategory (numeric)")
+loan_data["ListingCategory (numeric)"] <- NULL
 
 ```
 
-> **Tip**: Before you create any plots, it is a good idea to provide a short
-introduction into the dataset that you are planning to explore. Replace this
-quoted text with that general information!
+For this exploratory data analysis we are having a look at loan listings data 
+from a web service called (Prosper)[https://www.prosper.com] to try to figure
+out who are using the service, why they are taking a loan, and what eventually
+happends to that loan.
+
+Since the original dataset contains over 80 variables I have picked out a subset
+which we will use for our analysis based on the above stated questions.
+Initially some light data wrangling was also made to either make the data set
+more readable and to handle NA values.
 
 # Univariate Plots Section
 
@@ -44,7 +107,49 @@ forget to add a comment after each plot or closely-related group of plots!
 There should be multiple code chunks and text sections; the first one below is
 just to help you get started.
 
+Let's start by having a look at the summary statistics for the data to see what
+we have to work with.
+
 ```{r echo=FALSE, Univariate_Plots}
+
+summary(loan_data)
+
+```
+Our typical loan taker is a first time prosper user with equal posibility to be
+a homeowner or not, taking a loan over 36 to 40 months with an interest rate of
+around 19%. The typical size of a loan is $6500.
+
+```{r echo=FALSE, Univariate_Plots}
+
+top_10_occupations <- loan_data %>% 
+  group_by(Occupation) %>% 
+  summarise(Count = n()) %>% 
+  arrange(desc(Count)) %>% 
+  top_n(10, Count)
+
+ggplot(top_10_occupations) +
+  geom_col(aes(reorder(Occupation, -Count), Count)) +
+  labs(title = "Top 10 Occupations")
+
+ranked_employment_statuses <- loan_data %>% 
+  group_by(EmploymentStatus) %>% 
+  summarise(Count = n()) %>% 
+  arrange(desc(Count))
+
+qplot(ranked_employment_statuses)
+
+ranked_loan_statuses <- loan_data %>% 
+  group_by(LoanStatus) %>% 
+  summarise(Count = n()) %>% 
+  arrange(desc(Count))
+
+qplot(ranked_loan_statuses)
+
+count_income_ranges <- loan_data %>% 
+  group_by(IncomeRange) %>% 
+  summarise(Count = n())
+
+qplot(count_income_ranges)
 
 ```
 
