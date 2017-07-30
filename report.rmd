@@ -1,4 +1,4 @@
-TITLE by YOUR_NAME_HERE
+Prosper loan data analysis by Eric Persson
 ========================================================
 
 > **Tip**: You will see quoted sections like this throughout the template to
@@ -24,6 +24,7 @@ a margin line to help you keep track of this guideline!
 # want it to. This will clean up the flow of your report.
 
 library(tidyverse)
+library(gridExtra)
 
 ```
 
@@ -55,13 +56,17 @@ loan_data <- read_csv("data/prosperLoanData.csv",
                       ))
 
 # Replace NA values in the EmploymentStatusDuration and TotalProsperLoans
-# variables with zeros.
+# variables with zeros. NA values in EmploymentStatus and Occupation replaced
+# with counterparts already exsisting in the data.
 loan_data <- loan_data %>% 
-  replace_na(list(EmploymentStatusDuration = 0, TotalProsperLoans = 0))
+  replace_na(list(EmploymentStatusDuration = 0,
+                  TotalProsperLoans = 0,
+                  EmploymentStatus = "Not available",
+                  Occupation = "Unknown"))
 
 # Translating the numeric ListingCategory values to readable string data.
 listingCategory <- tribble(~"ListingCategory (numeric)", ~"ListingCategory",
-                           0, NA, 
+                           0, "Not available", 
                            1, "Debt Consolidation", 
                            2, "Home Improvement", 
                            3, "Business", 
@@ -82,8 +87,7 @@ listingCategory <- tribble(~"ListingCategory (numeric)", ~"ListingCategory",
                            18, "Taxes", 
                            19, "Vacation", 
                            20, "Wedding Loans")
-	
-loan_data %>% left_join(listingCategory, by = "ListingCategory (numeric)")
+loan_data <- loan_data %>% left_join(listingCategory, by = "ListingCategory (numeric)")
 loan_data["ListingCategory (numeric)"] <- NULL
 
 ```
@@ -110,46 +114,89 @@ just to help you get started.
 Let's start by having a look at the summary statistics for the data to see what
 we have to work with.
 
-```{r echo=FALSE, Univariate_Plots}
+```{r echo=FALSE, Univariate_Plots_1}
 
 summary(loan_data)
 
 ```
-Our typical loan taker is a first time prosper user with equal posibility to be
-a homeowner or not, taking a loan over 36 to 40 months with an interest rate of
-around 19%. The typical size of a loan is $6500.
 
-```{r echo=FALSE, Univariate_Plots}
+Based on the above numerical data our typical loan taker is a first time prosper
+user with equal posibility to be a homeowner or not, taking a loan over 36 to 40
+months with an interest rate of around 19%. The typical size of a loan is $6500.
 
+Next we plot the numbers of occurrencies for the nominal variables in our data set.
+
+```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height=3, fig.width=9, Univariate_Plots_2}
+
+# Create a dataframe with the counts for all employment statuses and plot the
+# results in a tilted bar plot.
+ranked_employment_statuses <- loan_data %>% 
+  group_by(EmploymentStatus) %>% 
+  summarise(Count = n()) %>% 
+  arrange(desc(Count))
+ggplot(ranked_employment_statuses) +
+  geom_col(aes(reorder(EmploymentStatus, Count), Count)) +
+  labs(title = "Ranked Employment Statuses",
+       x = "Employment Status ordered by Count") +
+  coord_flip()
+
+# Create dataframe with counts for each type of occupation in the data set,
+# arrange it by counts, and then select the top ten occupations. The data is
+# then plotted in a tilted bar plot.
 top_10_occupations <- loan_data %>% 
   group_by(Occupation) %>% 
   summarise(Count = n()) %>% 
   arrange(desc(Count)) %>% 
   top_n(10, Count)
-
 ggplot(top_10_occupations) +
-  geom_col(aes(reorder(Occupation, -Count), Count)) +
-  labs(title = "Top 10 Occupations")
+  geom_col(aes(reorder(Occupation, Count), Count)) +
+  labs(title = "Top 10 Occupations",
+       x = "Occupation ordered by Count") +
+  coord_flip()
 
-ranked_employment_statuses <- loan_data %>% 
-  group_by(EmploymentStatus) %>% 
-  summarise(Count = n()) %>% 
-  arrange(desc(Count))
-
-qplot(ranked_employment_statuses)
-
-ranked_loan_statuses <- loan_data %>% 
+# Create a dataframe with counts for each different type of loan status. Plot
+# the resulting dataframe according to the order given by the limits parameter
+# in the scale_x_limits layer.
+loan_statuses <- loan_data %>% 
   group_by(LoanStatus) %>% 
-  summarise(Count = n()) %>% 
-  arrange(desc(Count))
+  summarise(Count = n())
+ggplot(loan_statuses) +
+  geom_col(aes(LoanStatus, Count)) +
+  labs(title = "Loan Statuses") +
+  scale_x_discrete(limits = c("Chargedoff",
+                              "Defaulted",
+                              "Past Due (>120 days)",
+                              "Past Due (91-120 days)",
+                              "Past Due (61-90 days)",
+                              "Past Due (31-60 days)",
+                              "Past Due (16-30 days)",
+                              "Past Due (1-15 days)",
+                              "Cancelled",
+                              "Completed",
+                              "Current")) +
+  coord_flip()
 
-qplot(ranked_loan_statuses)
-
+# Create and plot a dataframe with the counts for all the exsisting income
+# ranges in the data set. The labels are tilted by 45 degree for readability.
 count_income_ranges <- loan_data %>% 
   group_by(IncomeRange) %>% 
   summarise(Count = n())
+ggplot(count_income_ranges) +
+  geom_col(aes(IncomeRange, Count)) +
+  labs(title = "Income Ranges") +
+  theme(axis.text.x=element_text(angle=20, vjust=0.5))
 
-qplot(count_income_ranges)
+# Create and plot a dataframe with the counts for all exsisting listing
+# categories in the data set.
+ranked_listing_categories <- loan_data %>% 
+  group_by(ListingCategory) %>% 
+  summarise(Count = n()) %>% 
+  arrange(desc(Count))
+ggplot(ranked_listing_categories) +
+  geom_col(aes(reorder(ListingCategory, Count), Count)) +
+  labs(title = "Ranked Listing Categories",
+       x = "Listing Categories ordered by count") +
+  coord_flip()
 
 ```
 
@@ -158,6 +205,74 @@ each code block and the end / start of your Markdown text so that it is
 formatted nicely in the knitted text. Note as well that text on consecutive
 lines is treated as a single space. Make sure you have a blank line between
 your paragraphs so that they too are formatted for easy readability.
+
+From the above plots we can see that most of the loan takers are employed but
+the type of occupation is seldom given with the vague "Professional" and "Other"
+occupation types both being in the top ten. A majority of loans are still being
+repaid but there are also an substantial amount of past due, defaulted or
+chargedoff loans.
+
+Further, the income range looks to be fairly normalised with an expected value
+somewhere around $50,000. Lastly, we have the listing categories for the loan
+listings and we can see that roughly half of the the reasons given for the loans
+through prosper is debt consolidation followed by the rather vague "Not
+Available" and "Other" categories in the top three.
+
+Now, after have gone through and had an initial look at all the variables in the
+data set let's revisit and plot some of the more interesting numerical variables
+to see how they are distributed.
+
+```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height=3, fig.width=9, Univariate_Plots_3}
+
+# Area plot for loan origination and closing dates. Binned at 1 month periods
+# for 100 months for the period where we have available data for the whole
+# month.
+loan_dates <- loan_data %>% 
+  select(one_of("LoanOriginationDate", "ClosedDate")) %>% 
+  gather("LoanOriginationDate", 
+         "ClosedDate", 
+         key = "Type", 
+         value = "Date",
+         factor_key = TRUE)
+ggplot(subset(loan_dates, Date < as.Date("2014-03-01") & Date > as.Date("2005-12-01"))) +
+  geom_histogram(aes(x = Date, fill = Type), 
+            alpha = 0.5, 
+            stat = "bin", 
+            bins = 100,
+            position = "identity") +
+  theme(legend.position = "bottom")
+
+# Plotting original loan amounts binned by $1000
+ggplot(loan_data) +
+  geom_histogram(aes(LoanOriginalAmount), bins = 35) +
+  scale_x_continuous(breaks = seq(0, 35000, 5000))
+
+# Loan term lenghts 
+ggplot(loan_data) +
+  geom_histogram(aes(Term), bins = 5) +
+  scale_x_continuous(breaks = seq(0, 60, 12))
+
+# Monthly Loan Payments
+ggplot(loan_data) +
+  geom_histogram(aes(MonthlyLoanPayment), bins = 46) +
+  scale_x_continuous(breaks = seq(0, 2300, 100))
+
+# $DebtToIncomeRatio using log10 scale for y to compensate for the number of
+# values around 0.25
+ggplot(loan_data) +
+  geom_histogram(aes(DebtToIncomeRatio), bins = 41) +
+  scale_x_continuous(breaks = seq(0, 10, 0.5)) +
+  scale_y_log10()
+
+```
+
+By plotting the above values we discovered some interesting facts such as that
+the loan term probably are locked at one, three or five years. We also saw that
+the usual amounts being borrowed are grouped around even $5000 numbers with a
+maximum at $35000. Lastly, the loan origination dates clearly shows effects from
+the 2008 recession and also an peak in new loans later years which we still
+aren't able to explain. Let's proceed with some further analysis before
+investigating inter-variable relations in the bivariate section.
 
 # Univariate Analysis
 
