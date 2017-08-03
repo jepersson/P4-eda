@@ -25,6 +25,7 @@ a margin line to help you keep track of this guideline!
 
 library(tidyverse)
 library(gridExtra)
+library(lubridate)
 
 ```
 
@@ -93,11 +94,11 @@ loan_data["ListingCategory (numeric)"] <- NULL
 ```
 
 For this exploratory data analysis we are having a look at loan listings data 
-from a web service called (Prosper)[https://www.prosper.com] to try to figure
+from a web service called [Prosper](https://www.prosper.com) to try to figure
 out who are using the service, why they are taking a loan, and what eventually
-happends to that loan.
+happens to that loan.
 
-Since the original dataset contains over 80 variables I have picked out a subset
+Since the original data set contains over 80 variables I have picked out a subset
 which we will use for our analysis based on the above stated questions.
 Initially some light data wrangling was also made to either make the data set
 more readable and to handle NA values.
@@ -105,8 +106,8 @@ more readable and to handle NA values.
 # Univariate Plots Section
 
 > **Tip**: In this section, you should perform some preliminary exploration of
-your dataset. Run some summaries of the data and create univariate plots to
-understand the structure of the individual variables in your dataset. Don't
+your data set. Run some summaries of the data and create univariate plots to
+understand the structure of the individual variables in your data set. Don't
 forget to add a comment after each plot or closely-related group of plots!
 There should be multiple code chunks and text sections; the first one below is
 just to help you get started.
@@ -121,10 +122,10 @@ summary(loan_data)
 ```
 
 Based on the above numerical data our typical loan taker is a first time prosper
-user with equal posibility to be a homeowner or not, taking a loan over 36 to 40
+user with equal possibility to be a homeowner or not, taking a loan over 36 to 40
 months with an interest rate of around 19%. The typical size of a loan is $6500.
 
-Next we plot the numbers of occurrencies for the nominal variables in our data set.
+Next we plot the numbers of occurrences for the nominal variables in our data set.
 
 ```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height=3, fig.width=9, Univariate_Plots_2}
 
@@ -210,9 +211,9 @@ From the above plots we can see that most of the loan takers are employed but
 the type of occupation is seldom given with the vague "Professional" and "Other"
 occupation types both being in the top ten. A majority of loans are still being
 repaid but there are also an substantial amount of past due, defaulted or
-chargedoff loans.
+charged-off loans.
 
-Further, the income range looks to be fairly normalised with an expected value
+Further, the income range looks to be fairly normalized with an expected value
 somewhere around $50,000. Lastly, we have the listing categories for the loan
 listings and we can see that roughly half of the the reasons given for the loans
 through prosper is debt consolidation followed by the rather vague "Not
@@ -220,27 +221,47 @@ Available" and "Other" categories in the top three.
 
 Now, after have gone through and had an initial look at all the variables in the
 data set let's revisit and plot some of the more interesting numerical variables
-to see how they are distributed.
+to see how they are distributed over time.
 
 ```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height=3, fig.width=9, Univariate_Plots_3}
 
-# Area plot for loan origination and closing dates. Binned at 1 month periods
+# Bin plots for loan origination and closing dates. Binned at 1 month periods
 # for 100 months for the period where we have available data for the whole
-# month.
-loan_dates <- loan_data %>% 
-  select(one_of("LoanOriginationDate", "ClosedDate")) %>% 
-  gather("LoanOriginationDate", 
-         "ClosedDate", 
-         key = "Type", 
-         value = "Date",
-         factor_key = TRUE)
-ggplot(subset(loan_dates, Date < as.Date("2014-03-01") & Date > as.Date("2005-12-01"))) +
-  geom_histogram(aes(x = Date, fill = Type), 
-            alpha = 0.5, 
-            stat = "bin", 
-            bins = 100,
-            position = "identity") +
-  theme(legend.position = "bottom")
+# month. We also calculate the cumulative sum of Originations and Closing per
+# entry to get the amount of active listings for the period 2005-12-01 to 2014-03-01.
+ggplot(subset(loan_data, LoanOriginationDate < as.Date("2014-03-01") & LoanOriginationDate > as.Date("2005-12-01"))) +
+  geom_histogram(aes(LoanOriginationDate), stat = "bin", bins = 100) +
+  scale_y_continuous(limits = c(0, 6000),
+                     breaks = seq(0, 6000, 1000))
+
+ggplot(subset(loan_data, ClosedDate < as.Date("2014-03-01") & ClosedDate > as.Date("2005-12-01"))) +
+  geom_histogram(aes(ClosedDate), stat = "bin", bins = 100) +
+  scale_y_continuous(limits = c(0, 6000),
+                     breaks = seq(0, 6000, 1000))
+
+Originations <- loan_data %>%
+  select(LoanOriginationDate) %>%
+  group_by(LoanOriginationDate) %>%
+  summarise(OriginationCount = n())
+Closings <- loan_data %>% 
+  select(ClosedDate) %>% 
+  group_by(ClosedDate) %>% 
+  summarise(ClosedCount = -n())
+Delta <- tibble(Date = seq(ymd_hms("2005-11-15 00:00:00"), 
+                           ymd_hms("2014-03-12 00:00:00"), 
+                           "days")) %>% 
+  left_join(Originations, 
+            by = c("Date" = "LoanOriginationDate")) %>% 
+  left_join(Closings,
+            by = c("Date" = "ClosedDate")) %>% 
+  rowwise() %>% 
+  mutate(DeltaCount = sum(OriginationCount,
+                           ClosedCount,
+                           na.rm = TRUE))
+ActiveListings <- Delta %>% 
+  transform(Count = cumsum(DeltaCount))
+ggplot(ActiveListings) + 
+  geom_line(aes(Date, Count)) 
 
 # Plotting original loan amounts binned by $1000
 ggplot(loan_data) +
@@ -257,6 +278,11 @@ ggplot(loan_data) +
   geom_histogram(aes(MonthlyLoanPayment), bins = 46) +
   scale_x_continuous(breaks = seq(0, 2300, 100))
 
+# Borrower rates
+ggplot(loan_data) +
+  geom_histogram(aes(BorrowerRate), bins = 51) +
+  scale_x_continuous(breaks = seq(0, 0.5, 0.1))
+
 # $DebtToIncomeRatio using log10 scale for y to compensate for the number of
 # values around 0.25
 ggplot(loan_data) +
@@ -267,7 +293,7 @@ ggplot(loan_data) +
 ```
 
 By plotting the above values we discovered some interesting facts such as that
-the loan term probably are locked at one, three or five years. We also saw that
+the loan term probably are artificially locked at one, three or five years. We also saw that
 the usual amounts being borrowed are grouped around even $5000 numbers with a
 maximum at $35000. Lastly, the loan origination dates clearly shows effects from
 the 2008 recession and also an peak in new loans later years which we still
@@ -282,17 +308,67 @@ gather your observations and add your own if you have other thoughts!
 
 ### What is the structure of your dataset?
 
-### What is/are the main feature(s) of interest in your dataset?
+The original data set contains more variables than what we could practically
+cover in one go so to narrow them down we posed some questions about the data.
+Let's revisit these questions to see if we made any discoveries worth noting
+already.
 
+First, to see who is using the service we can look at the following variables
+mentioned:
+
+* Employment Status
+* Occupations
+* Income Ranges
+* Is Borrower Homeowner
+* etc.
+
+Based on the summary data and plots presented, our typical loan taker is
+employed, with an unspecified occupation, and probably an income of $25,000 to
+$50,000. He/she is currently an homeowner and have debts of about a ratio of
+0.22 of their income.
+
+The reason for the loan is most likely debt consolidation with home improvement
+and business lying as distant seconds among the specified reasons as seen in the
+histogram with ranked listing categories.
+
+To see what eventually happened with the loan we can have a look at the loan
+status bin plot giving an overview over the different statuses for all the loans
+in the data set. Out of a little over 100,000 loan listings we have a little
+over 10,000 that have been defaulted or charged-off(> 150 days overdue with no
+reasonable expectation of sufficient payment).
+
+### What is/are the main feature(s) of interest in your dataset?
 ### What other features in the dataset do you think will help support your \
 investigation into your feature(s) of interest?
 
+Loan origination dates vs. closed dates together with the data on overdue,
+defaulted, or charged-off loans. Using these features together with the above
+calculated active loans variable it would be interesting to dive deeper and see
+how, and when, the 2008 recession affected the loans taken. Further, since it
+seems like the service has enjoyed some explosive growth going in to 2014 it
+woul be very interesting to see what these added loans are and perhaps why they
+have increased.
+
+Another features worth looking in to is the borrower rates which mostly pikes my
+interest due to the unclear form of the distribution. Investigating what
+variables are correlated and how they affect this blob of values centered
+somwhere around 0.2 would be very interesting and perhaps a good candidate for a
+regression model and analysis.
+
 ### Did you create any new variables from existing variables in the dataset?
+
+Using the Loan origination dates together with the closing dates I calculated a new variable called active listings to show the volume of current loans on the service. The calculation where made by taking the difference between originated and closed loans for each date during a period between 2005 and 2014 and the calculate the cumulative sum of those differences.
 
 ### Of the features you investigated, were there any unusual distributions? \
 Did you perform any operations on the data to tidy, adjust, or change the form \
 of the data? If so, why did you do this?
 
+In addition to make sure that all variables were read in using the correct data
+type, I also choose how to handle NA values. For NA values for nominal data was
+substituted with an preexisting category being best suited to improve the
+readability of following histograms. Numeral values where set to 0 for ordinal
+variables where NAs where present this in order to ease calculations in the
+analysis while not influencing other statistical measures.
 
 # Bivariate Plots Section
 
@@ -313,7 +389,7 @@ here. Use the questions below to guide your discussion.
 
 ### Talk about some of the relationships you observed in this part of the \
 investigation. How did the feature(s) of interest vary with other features in \
-the dataset?
+the data set?
 
 ### Did you observe any interesting relationships between the other features \
 (not the main feature(s) of interest)?
@@ -350,7 +426,7 @@ strengths and limitations of your model.
 # Final Plots and Summary
 
 > **Tip**: You've done a lot of exploration and have built up an understanding
-of the structure of and relationships between the variables in your dataset.
+of the structure of and relationships between the variables in your data set.
 Here, you will select three plots from all of your previous exploration to
 present here as a summary of some of your most interesting findings. Make sure
 that you have refined your selected plots for good titling, axis labels (with
@@ -387,7 +463,7 @@ make sure you justify why you chose each plot by describing what it shows.
 > **Tip**: Here's the final step! Reflect on the exploration you performed and
 the insights you found. What were some of the struggles that you went through?
 What went well? What was surprising? Make sure you include an insight into
-future work that could be done with the dataset.
+future work that could be done with the data set.
 
 > **Tip**: Don't forget to remove this, and the other **Tip** sections before
 saving your final work and knitting the final report!
