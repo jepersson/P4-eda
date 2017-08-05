@@ -346,13 +346,13 @@ defaulted, or charged-off loans. Using these features together with the above
 calculated active loans variable it would be interesting to dive deeper and see
 how, and when, the 2008 recession affected the loans taken. Further, since it
 seems like the service has enjoyed some explosive growth going in to 2014 it
-woul be very interesting to see what these added loans are and perhaps why they
+would be very interesting to see what these added loans are and perhaps why they
 have increased.
 
 Another features worth looking in to is the borrower rates which mostly pikes my
 interest due to the unclear form of the distribution. Investigating what
 variables are correlated and how they affect this blob of values centered
-somwhere around 0.2 would be very interesting and perhaps a good candidate for a
+somewhere around 0.2 would be very interesting and perhaps a good candidate for a
 regression model and analysis.
 
 ### Did you create any new variables from existing variables in the dataset?
