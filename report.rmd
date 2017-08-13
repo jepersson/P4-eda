@@ -404,6 +404,20 @@ To continue follow our interesting findings regarding the effects of the 2008
 recession on active loan volumes let's plot the change in loan volumes for the
 entire period. We will use the monthly deltas to make the graph easier to read.
 
+```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height = 9, fig.width = 9, Bivariate_Plots_0}
+# Plotting correlation matrix
+ggpairs(subset(loan_data, 
+               select = c("BorrowerRate",
+                          "LoanOriginalAmount",
+                          "MonthlyLoanPayment",
+                          "Term",
+                          "LoanOriginationDate",
+                          "DebtToIncomeRatio",
+                          "IncomeRange")),
+        bins = 100,
+        size = 0.2)
+```
+
 ```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height=3, fig.width=9, Bivariate_Plots_1}
 
 # Calculating and plotting monthly active listings changes
@@ -507,18 +521,9 @@ ggplot(loan_data) +
              alpha = 0.1,
              size = 0.4)
 
-# Plotting correlation matrix
-ggpairs(subset(loan_data, select = c("BorrowerRate",
-                                     "LoanOriginalAmount",
-                                     "MonthlyLoanPayment",
-                                     "Term")))
-
-ggpairs(subset(loan_data, select = c("BorrowerRate",
-                                     "LoanOriginationDate",
-                                     "DebtToIncomeRatio",
-                                     "IncomeRange")))
 
 ```
+
 
 # Bivariate Analysis
 
