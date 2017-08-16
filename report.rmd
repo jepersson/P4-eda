@@ -552,13 +552,46 @@ here. Use the questions below to guide your discussion.
 investigation. How did the feature(s) of interest vary with other features in \
 the data set?
 
+We first had a look at the ratios for loan statuses and listing categories to 
+see if we could see any effects from the 2008 depression in our data other than 
+the decrease in the volume of loans. In the loan status data we could see an 
+increase in the part of loans being defaulted or chargedoff followed by a 
+decrease in ratio when the economy recovered. For the listing categories we saw 
+that the biggest category has been and continues to be debt consolidation, 
+except for the obvious gaps in the data during 2008 there doesn't seem to have 
+been any greater impacts on the types of loans taken through prosper during or 
+after the time of 2008.
 
+Turning our focus towards the borrower rate for loans I split up the 
+visualizations into two steps depending on if the supporting variables were of 
+a categorical or continuous type. First looking at the continuous variables we 
+can see that the original amount of the loan, together with the size of the 
+monthly payments and number of loan givers affect the borrower positively when 
+increasing, there is a negative correlation meaning that an increase in either 
+variable is connected with an decrease in the borrower rate for the loan.
+The only variable we focus on that increases the borrower rate is the debt to 
+income ratio which shows an slightly positive correlation.
+
+It is worth mentioning that none of the above relations did show any stronger 
+correlation all having a ratio below 0.5.
+
+For the categorical variables all of them pointed to correlations between the 
+borrower rate and income, home ownership, term, occupation, and category of the 
+loan. It would definetiley be interesting to pursue the analysis of the 
+correlation between borrower rates and these different variables further in the 
+following multivariate section.
 
 ### Did you observe any interesting relationships between the other features \
 (not the main feature(s) of interest)?
 
 ### What was the strongest relationship you found?
 
+The only really strong relationship I could find in the above analysis were the 
+relation between the original amount of the loan and monthly payments. This does 
+seem a bit trivial, since you could come to this conclusion wihtout any 
+statistical analysis at all but since I haven't really done any analysis with 
+real contemporary data like this it does feel kind of refreshing with a different 
+challenge compared to the orcestrated assignments I experienced as a student.
 
 # Multivariate Plots Section
 
