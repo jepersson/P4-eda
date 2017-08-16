@@ -151,7 +151,7 @@ months with an interest rate of around 19%. The typical size of a loan is $6500.
 
 Next we plot the numbers of occurrences for the nominal variables in our data set.
 
-```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height=3, fig.width=9, Univariate_Plots_2}
+```{r echo=FALSE, warning=FALSE, fig.align="center", Univariate_Plots_2}
 
 # Create a dataframe with the counts for all employment statuses and plot the
 # results in a tilted bar plot.
@@ -199,7 +199,8 @@ count_income_ranges <- loan_data %>%
 ggplot(count_income_ranges) +
   geom_col(aes(IncomeRange, Count)) +
   labs(title = "Income Ranges") +
-  theme(axis.text.x=element_text(angle=20, vjust=0.5))
+  theme(axis.text.x=element_text(angle=20, vjust=0.5)) +
+  coord_flip()
 
 # Create and plot a dataframe with the counts for all exsisting listing
 # categories in the data set.
@@ -237,7 +238,7 @@ Now, after have gone through and had an initial look at all the variables in the
 data set let's revisit and plot some of the more interesting numerical variables
 to see how they are distributed over time.
 
-```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height=3, fig.width=9, Univariate_Plots_3}
+```{r echo=FALSE, warning=FALSE, fig.align="center", Univariate_Plots_3}
 
 # Bin plots for loan origination and closing dates. Binned at 1 month periods
 # for 100 months for the period where we have available data for the whole
@@ -258,11 +259,10 @@ ggplot(subset(loan_data,
                      breaks = seq(0, 6000, 1000))
 
 Originations <- loan_data %>%
-  select(LoanOriginationDate) %>%
   group_by(LoanOriginationDate) %>%
-  summarise(OriginationCount = n())
+  summarise(OriginationCount = n(), 
+            MeanBorrowerRate = mean(BorrowerRate))
 Closings <- loan_data %>% 
-  select(ClosedDate) %>% 
   group_by(ClosedDate) %>% 
   summarise(ClosedCount = -n())
 Delta <- tibble(Date = seq(ymd_hms("2005-11-15 00:00:00"), 
@@ -281,6 +281,21 @@ ActiveListings <- Delta %>%
 ggplot(ActiveListings) + 
   geom_line(aes(Date, Count)) 
 
+# Calculating and plotting monthly active listings changes
+MonthlyActiveListings <- ActiveListings %>% 
+  group_by(Month = floor_date(Date, "month")) %>% 
+  summarise(Delta = sum(DeltaCount))
+ggplot(MonthlyActiveListings) + 
+  geom_line(aes(Month, Delta))
+
+# Plotting mean borrower rates over time for originating loans
+MonthlyOriginations <- Originations %>% 
+  group_by(Month = floor_date(LoanOriginationDate, "month")) %>% 
+  summarise(MonthlyMeanBorrowerRate = mean(MeanBorrowerRate))
+ggplot(MonthlyOriginations) +
+  geom_line(aes(Month, MonthlyMeanBorrowerRate))
+  
+
 # Plotting original loan amounts binned by $1000
 ggplot(loan_data) +
   geom_histogram(aes(LoanOriginalAmount), bins = 35) +
@@ -294,9 +309,10 @@ ggplot(loan_data) +
 # Monthly Loan Payments
 ggplot(loan_data) +
   geom_histogram(aes(MonthlyLoanPayment), bins = 46) +
-  scale_x_continuous(breaks = seq(0, 2300, 100))
+  scale_x_continuous(breaks = seq(0, 2300, 100)) +
+  theme(axis.text.x=element_text(angle=20, vjust=0.5))
 
-# Borrower rates
+# Borrower rates histogram
 ggplot(loan_data) +
   geom_histogram(aes(BorrowerRate), bins = 51) +
   scale_x_continuous(breaks = seq(0, 0.5, 0.1))
@@ -401,32 +417,10 @@ supporting variables. Try to look at relationships between supporting variables
 as well.
 
 To continue follow our interesting findings regarding the effects of the 2008
-recession on active loan volumes let's plot the change in loan volumes for the
-entire period. We will use the monthly deltas to make the graph easier to read.
+recession on active loan volumes let's plot the change in loan statuses and 
+listing categories for the period.
 
-```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height = 9, fig.width = 9, Bivariate_Plots_0}
-# Plotting correlation matrix
-ggpairs(subset(loan_data, 
-               select = c("BorrowerRate",
-                          "LoanOriginalAmount",
-                          "MonthlyLoanPayment",
-                          "Term",
-                          "LoanOriginationDate",
-                          "DebtToIncomeRatio",
-                          "IncomeRange")),
-        bins = 100,
-        size = 0.2)
-```
-
-```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height=3, fig.width=9, Bivariate_Plots_1}
-
-# Calculating and plotting monthly active listings changes
-MonthlyActiveListings <- ActiveListings %>% 
-  group_by(Month = floor_date(Date, "month")) %>% 
-  summarise(Delta = sum(DeltaCount))
-
-ggplot(MonthlyActiveListings) + 
-  geom_line(aes(Month, Delta))
+```{r echo=FALSE, warning=FALSE, fig.align="center", Bivariate_Plots_1}
 
 # Loan closed statuses for loans over time.
 ggplot(subset(loan_data, 
@@ -435,75 +429,107 @@ ggplot(subset(loan_data,
   geom_histogram(aes(ClosedDate, fill = LoanStatus), 
                  stat = "bin",
                  bins = 100,
-                 position = "fill")
-
-# Ratio for active loan's current statuses over time.
-ggplot(subset(loan_data, 
-              LoanOriginationDate < as.Date("2014-03-01") & 
-                LoanOriginationDate > as.Date("2005-12-01") &
-                is.na(ClosedDate))) +
-  geom_histogram(aes(LoanOriginationDate, 
-                     fill = LoanStatus),
-                 bins = 100,
-                 position = "fill")
+                 position = "fill") +
+  scale_fill_manual(values = c("#c7e9c0",
+                               "#74c476", 
+                               "#238b45",
+                               "#005a32"))
 
 # Ratio for listing categories over time.
 ggplot(loan_data) +
   geom_histogram(aes(ListingCreationDate, fill = ListingCategory),
                  bins = 100, 
-                 position = "fill")
+                 position = "fill") +
+  scale_fill_manual(values = c("#edf8e9",
+                               "#c7e9c0",
+                               "#a1d99b",
+                               "#74c476", 
+                               "#41ab5d",
+                               "#238b45",
+                               "#005a32",
+                               "#eff3ff",
+                               "#c6dbef",
+                               "#9ecae1",
+                               "#6baed6",
+                               "#4292c6",
+                               "#2171b5",
+                               "#084594",
+                               "#feedde",
+                               "#fdd0a2",
+                               "#fdae6b",
+                               "#fd8d3c",
+                               "#f16913",
+                               "#d94801",
+                               "#8c2d04"))
 
 ```
 
+First, we can see that there have been some change in the gathering of the data
+in the shift between 2007 and 2008. Looking at loan statuses we can see that the 
+ratio for Chargedoff and Defaulted loans did shift sharply with the amount of 
+Chargedoff loans skyrocketing. Analogously, the listing categories went from 
+mostly Not available to a mix of all different categories at the same period.
 
-```{r echo=FALSE, warning=FALSE, fig.align="center", fig.height=3, fig.width=9, Bivariate_Plots_2}
+Looking at some of the numerical values in our data set we unfortunately cannot 
+see any meaningful correlation between variables, except for the connection 
+between monthly payments and the original amount of the loan.
 
-# Plotting original loan amount vs the given borrower rate
-ggplot(loan_data) +
-  geom_point(aes(LoanOriginalAmount,
-                 BorrowerRate),
-             alpha = 0.1,
-             size = 0.4)
+```{r echo=FALSE, warning=FALSE, fig.align="center", Bivariate_Plots_2}
+
+# Plotting correlation matrix
+ggpairs(subset(loan_data, 
+               select = c("BorrowerRate",
+                          "LoanOriginalAmount",
+                          "MonthlyLoanPayment",
+                          "DebtToIncomeRatio",
+                          "Investors")),
+        lower = list(continuous = wrap("points", 
+                                       size = 0.2,
+                                       alpha = 0.1))) +
+    theme(axis.text.x=element_text(angle=20, vjust=0.5))
+
+
+```
+
+Following our slight drawback from analysing the continous variables we instead 
+focus on the categorical ones. Here we can start to see some slight trends in 
+the relationships between all our supporting variables and the borrower rate, 
+however not one single variable seems significant enough to prove anything. 
+
+```{r echo=FALSE, warning=FALSE, fig.align="center", Bivariate_Plots_3}
 
 # Plotting the term(cut into categories) vs given borrower rate
 ggplot(loan_data) +
   geom_boxplot(aes(cut(Term, c(0, 12, 36, 60)),
-                 BorrowerRate))
-
-
-# Plotting borrower rate vs origination date
-ggplot(loan_data) +
-  geom_point(aes(LoanOriginationDate,
-                 BorrowerRate),
-             alpha = 0.1,
-             size = 0.4)
-
-# Plotting borrower rate vs debt to income ratio.
-ggplot(loan_data) +
-  geom_point(aes(DebtToIncomeRatio,
-                 BorrowerRate),
-             alpha = 0.1,
-             size = 0.4)
+                 BorrowerRate)) +
+  coord_flip()
 
 # Plotting IncomeRange vs borrower rate
 ggplot(loan_data) +
   geom_boxplot(aes(IncomeRange,
-                 BorrowerRate))
-
-# Plotting ListingCategory vs borrower rate
-ggplot(loan_data) +
-  geom_boxplot(aes(ListingCategory,
                  BorrowerRate)) +
   coord_flip()
 
-# Plotting ListingCategory vs borrower rate
+# Plotting ListingCategory vs borrower rate (Ranked by BorrowerRate median)
+ranked_listing_categories_by_borrower_rate <- loan_data %>% 
+  group_by(ListingCategory) %>% 
+  summarise(Median = median(BorrowerRate)) %>% 
+  arrange(Median)
+loan_data$ListingCategory <- 
+  factor(loan_data$ListingCategory,
+         levels = ranked_listing_categories_by_borrower_rate$ListingCategory)
 ggplot(loan_data) +
-  geom_point(aes(EmploymentStatusDuration,
-                 BorrowerRate),
-             alpha = 0.1,
-             size = 0.4)
+  geom_boxplot(aes(ListingCategory, BorrowerRate)) +
+  coord_flip()
 
-# Plotting Occupation vs Borrower rate
+# Plotting Occupation vs Borrower rate (Ranked by BorrowerRate median)
+ranked_occupation_by_borrower_rate <- loan_data %>% 
+  group_by(Occupation) %>% 
+  summarise(Median = median(BorrowerRate)) %>% 
+  arrange(Median)
+loan_data$Occupation <- 
+  factor(loan_data$Occupation,
+         levels = ranked_occupation_by_borrower_rate$Occupation)
 ggplot(loan_data) +
   geom_boxplot(aes(Occupation,
                  BorrowerRate)) +
@@ -512,18 +538,10 @@ ggplot(loan_data) +
 # Plotting HomeOwner vs BorrowerRate
 ggplot(loan_data) +
   geom_boxplot(aes(IsBorrowerHomeowner,
-                 BorrowerRate))
-
-# Plotting number of investors vs borrower rate
-ggplot(loan_data) +
-  geom_point(aes(Investors,
-                 BorrowerRate),
-             alpha = 0.1,
-             size = 0.4)
-
+                 BorrowerRate)) +
+  coord_flip()
 
 ```
-
 
 # Bivariate Analysis
 
@@ -533,6 +551,8 @@ here. Use the questions below to guide your discussion.
 ### Talk about some of the relationships you observed in this part of the \
 investigation. How did the feature(s) of interest vary with other features in \
 the data set?
+
+
 
 ### Did you observe any interesting relationships between the other features \
 (not the main feature(s) of interest)?
