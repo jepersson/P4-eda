@@ -27,6 +27,7 @@ library(tidyverse)
 library(gridExtra)
 library(lubridate)
 library(GGally)
+library(scales)
 
 ```
 
@@ -491,7 +492,7 @@ ggpairs(subset(loan_data,
 
 ```
 
-Following our slight drawback from analysing the continous variables we instead 
+Following our slight drawback from analyzing the continuous variables we instead 
 focus on the categorical ones. Here we can start to see some slight trends in 
 the relationships between all our supporting variables and the borrower rate, 
 however not one single variable seems significant enough to prove anything. 
@@ -555,7 +556,7 @@ the data set?
 We first had a look at the ratios for loan statuses and listing categories to 
 see if we could see any effects from the 2008 depression in our data other than 
 the decrease in the volume of loans. In the loan status data we could see an 
-increase in the part of loans being defaulted or chargedoff followed by a 
+increase in the part of loans being defaulted or Chargedoff followed by a 
 decrease in ratio when the economy recovered. For the listing categories we saw 
 that the biggest category has been and continues to be debt consolidation, 
 except for the obvious gaps in the data during 2008 there doesn't seem to have 
@@ -577,7 +578,7 @@ correlation all having a ratio below 0.5.
 
 For the categorical variables all of them pointed to correlations between the 
 borrower rate and income, home ownership, term, occupation, and category of the 
-loan. It would definetiley be interesting to pursue the analysis of the 
+loan. It would definitely be interesting to pursue the analysis of the 
 correlation between borrower rates and these different variables further in the 
 following multivariate section.
 
@@ -588,10 +589,10 @@ following multivariate section.
 
 The only really strong relationship I could find in the above analysis were the 
 relation between the original amount of the loan and monthly payments. This does 
-seem a bit trivial, since you could come to this conclusion wihtout any 
+seem a bit trivial, since you could come to this conclusion without any 
 statistical analysis at all but since I haven't really done any analysis with 
 real contemporary data like this it does feel kind of refreshing with a different 
-challenge compared to the orcestrated assignments I experienced as a student.
+challenge compared to the orchestrated assignments I experienced as a student.
 
 # Multivariate Plots Section
 
@@ -602,8 +603,90 @@ create here are justified by the plots you explored in the previous section. If
 you plan on creating any mathematical models, this is the section where you
 will do that.
 
-```{r echo=FALSE, Multivariate_Plots}
+```{r echo=FALSE, Multivariate_Plots_1}
 
+ggplot(loan_data) +
+  geom_density(aes(BorrowerRate, color = IncomeRange))
+
+ggplot(loan_data) +
+  geom_density(aes(BorrowerRate, color = cut(Term, c(0, 12, 36, 60))))
+
+ggplot(loan_data) +
+  geom_density(aes(BorrowerRate, 
+                   color = cut(DebtToIncomeRatio,
+                               c(0, 
+                                 0.14, 
+                                 0.22, 
+                                 0.32, 
+                                 10.010)))) +
+  labs(color = "DebtToIncomeRatio")
+
+ggplot(loan_data) +
+  geom_density(aes(BorrowerRate, color = IsBorrowerHomeowner))
+
+```
+
+```{r echo=FALSE, Multivariate_Plots_2}
+
+# Plotting facet for borrower rate histograms by income range
+ggplot(loan_data) +
+  geom_point(aes(BorrowerRate, LoanOriginalAmount, color = IncomeRange),
+             size = 0.5,
+             alpha = 0.2) +
+  scale_color_brewer(palette = "Greens")
+
+ggplot(loan_data) +
+  geom_point(aes(BorrowerRate, 
+                 LoanOriginalAmount, 
+                 color = cut(LoanOriginationDate, 
+                             breaks = c(unique(floor_date(LoanOriginationDate, 
+                                                   "year"))))),
+             size = 0.5,
+             alpha = 0.2) +
+  labs(color = "LoanOriginationDate") +
+  scale_color_brewer(palette = "Blues",
+                     labels = c("2005",
+                                "2006",
+                                "2007",
+                                "2008",
+                                "2009",
+                                "2010",
+                                "2011",
+                                "2012",
+                                "2013"))
+
+ggplot(loan_data) +
+  geom_point(aes(BorrowerRate, LoanOriginalAmount, color = DebtToIncomeRatio),
+             size = 0.5,
+             alpha = 0.2) +
+  scale_color_gradientn(colors = c("#fee5d9", 
+                                   "#fcae91", 
+                                   "#fb6a4a", 
+                                   "#de2d26",
+                                   "#a50f15"),
+                        values = c(0, 
+                                   rescale(0.14, 
+                                           to = c(0, 1), 
+                                           from = range(loan_data$DebtToIncomeRatio, 
+                                                        na.rm = TRUE)),
+                                   rescale(0.22, 
+                                           to = c(0, 1), 
+                                           from = range(loan_data$DebtToIncomeRatio, 
+                                                        na.rm = TRUE)),
+                                   rescale(0.32, 
+                                           to = c(0, 1), 
+                                           from = range(loan_data$DebtToIncomeRatio, 
+                                                        na.rm = TRUE)),
+                                   1))
+
+ggplot(loan_data) +
+  geom_point(aes(BorrowerRate, 
+                 LoanOriginalAmount, 
+                 color = cut(Term, c(0, 12, 36, 60))),
+             size = 0.5,
+             alpha = 0.2) +
+  scale_color_brewer(palette = "Oranges")
+                   
 ```
 
 # Multivariate Analysis
