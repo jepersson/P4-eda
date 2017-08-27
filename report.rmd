@@ -295,7 +295,6 @@ MonthlyOriginations <- Originations %>%
   summarise(MonthlyMeanBorrowerRate = mean(MeanBorrowerRate))
 ggplot(MonthlyOriginations) +
   geom_line(aes(Month, MonthlyMeanBorrowerRate))
-  
 
 # Plotting original loan amounts binned by $1000
 ggplot(loan_data) +
@@ -603,7 +602,11 @@ create here are justified by the plots you explored in the previous section. If
 you plan on creating any mathematical models, this is the section where you
 will do that.
 
-```{r echo=FALSE, Multivariate_Plots_1}
+First we take a look at the loan original amount and borrower rate in relation 
+to income range, term, debt to income ratio, and if the borrower is a homeowner 
+or not.
+
+```{r echo=FALSE, warning=FALSE, fig.align="center", Multivariate_Plots_1}
 
 ggplot(loan_data) +
   geom_density(aes(BorrowerRate, color = IncomeRange))
@@ -626,7 +629,10 @@ ggplot(loan_data) +
 
 ```
 
-```{r echo=FALSE, Multivariate_Plots_2}
+Next, we also take a look at some borrower density curves for the same variables 
+as above. 
+
+```{r echo=FALSE, warning=FALSE, fig.align="center", Multivariate_Plots_2}
 
 # Plotting facet for borrower rate histograms by income range
 ggplot(loan_data) +
@@ -697,8 +703,56 @@ looking at your feature(s) of interest?
 
 ### Were there any interesting or surprising interactions between features?
 
+From the group of scatter plots in this section we can see that the borrower 
+rate for a given loan amount increases together with an longer term loan and
+also with the borrower's debt to income ratio. We can see this since for any
+given value of loan amount the color is getting darker the further to the right
+we move. The inverse is also true for the borrower income range which shows that 
+the borrower rate is generally lower for higher income borrowers given the same
+loan amount. Lastly, we have the year of origin which does not show any similar
+patterns, but instead there is a step change in the minimum loan amount and
+maximum borrower rate. This is most likely due to a policy change at prosper
+taking place somewhere 2007-2008.
+
+Moving on to the density plots we can see some interesting observations in the 
+plot comparing borrower rate and income ranges. The not employed 
+status is in general generating the worst borrower rate but surprisingly, not
+displaying anything at all is better and comparable to the lowest income range
+bracket. Something even more surprising is that $0 income shares roughly the same
+shape as income ranges from $50000 and upwards. 
+
+Looking at the borrower rate density for loan terms we can see that shorter
+term loans do get lower borrower rates but that there is a turning point
+somewhere after 36 months where the uncertainty from a longer term length take
+the overhand over other factors deciding the borrower rate. This can be seen in
+the lower variance for loans with terms up to 60 months.
+
+The debt to income ratio's density is neatly sorted in an expected order with
+unreported and high ratios having peaks around 0.3 in borrower rates and lower
+rates having peaks between 0.2 and 0.1. The only thing standing out is that the
+fourth quartile (0.32, 10] almost has two equally high peaks at both 0.2 and
+0.3. I believe this might be stemming from the fact that this span is the
+longest of the four quartiles. Most likely the distribution for the lower and
+upper half of this quartile has different distributions.
+
+The last graph, showing the rates divided by home owner or not has start out 
+with as we might expect with homeowner density being higher at lower interest
+rate than non homeowner later switching to non homeowners being on top for
+borrower rates just before hitting the 0.2 rate mark. Interesting to see
+however was that at higher rates, 0.3 and above, being a homeowner or not does
+not seem to affect the rate at all. Perhaps loan-takers given these kind of rates
+has some other circumstances overshadowing the potential extra security being a
+homeowner could bring.
+
 ### OPTIONAL: Did you create any models with your dataset? Discuss the \
 strengths and limitations of your model.
+
+My initial plan was to try create a linear model to predict borrower rates based
+on the variables I had choose from the data set but going through the analysis up
+until now I do not feel that I have been able to find enough data to make a
+decision regarding what would constitute a suitable model. Rather than trying to
+do anything based of loosely based assumption I will leave modelling for another
+time.
 
 ------
 
@@ -712,8 +766,15 @@ that you have refined your selected plots for good titling, axis labels (with
 units), and good aesthetic choices (e.g. color, transparency). After each plot,
 make sure you justify why you chose each plot by describing what it shows.
 
+
+
 ### Plot One
-```{r echo=FALSE, Plot_One}
+```{r echo=FALSE, warning=FALSE, fig.align="center", Plot_One}
+
+ggplot(MonthlyActiveListings) + 
+  geom_line(aes(Month, Delta)) +
+  labs(title = "Monthly deltas in active loan listings") +
+  theme_minimal()
 
 ```
 
@@ -721,7 +782,16 @@ make sure you justify why you chose each plot by describing what it shows.
 
 
 ### Plot Two
-```{r echo=FALSE, Plot_Two}
+```{r echo=FALSE, warning=FALSE, fig.align="center", Plot_Two}
+
+ggplot(loan_data) +
+  geom_density(aes(BorrowerRate, color = cut(Term, c(0, 12, 36, 60)))) +
+  labs(title = "Borrower rate density by term length",
+       y = "Density",
+       x = "Borrower rate",
+       color = "Term") + 
+  scale_color_hue(labels = c("12 months", "36 months", "60 months")) +
+  theme_minimal()
 
 ```
 
@@ -729,7 +799,86 @@ make sure you justify why you chose each plot by describing what it shows.
 
 
 ### Plot Three
-```{r echo=FALSE, Plot_Three}
+```{r echo=FALSE, warning=FALSE, fig.align="center", fig.width=5, fig.height=3, Plot_Three}
+
+income_plot <- ggplot(loan_data) +
+  geom_point(aes(BorrowerRate, LoanOriginalAmount, color = IncomeRange),
+             size = 0.5,
+             alpha = 0.2) +
+  scale_color_brewer(palette = "Greens") +
+  labs(y = "Loan original amount",
+       x = "Borrower rate",
+       color = "Income range") +
+  theme_minimal()
+
+origination_plot <- ggplot(loan_data) +
+  geom_point(aes(BorrowerRate, 
+                 LoanOriginalAmount, 
+                 color = cut(LoanOriginationDate, 
+                             breaks = c(unique(floor_date(LoanOriginationDate, 
+                                                   "year"))))),
+             size = 0.5,
+             alpha = 0.2) +
+  labs(color = "LoanOriginationDate") +
+  scale_color_brewer(palette = "Blues",
+                     labels = c("2005",
+                                "2006",
+                                "2007",
+                                "2008",
+                                "2009",
+                                "2010",
+                                "2011",
+                                "2012",
+                                "2013")) +
+  labs(y = "Loan original amount",
+       x = "Borrower rate",
+       color = "Origination date") +
+  theme_minimal()
+
+debt_plot <- ggplot(loan_data) +
+  geom_point(aes(BorrowerRate, LoanOriginalAmount, color = DebtToIncomeRatio),
+             size = 0.5,
+             alpha = 0.2) +
+  scale_color_gradientn(colors = c("#fee5d9", 
+                                   "#fcae91", 
+                                   "#fb6a4a", 
+                                   "#de2d26",
+                                   "#a50f15"),
+                        values = c(0, 
+                                   rescale(0.14, 
+                                           to = c(0, 1), 
+                                           from = range(loan_data$DebtToIncomeRatio, 
+                                                        na.rm = TRUE)),
+                                   rescale(0.22, 
+                                           to = c(0, 1), 
+                                           from = range(loan_data$DebtToIncomeRatio, 
+                                                        na.rm = TRUE)),
+                                   rescale(0.32, 
+                                           to = c(0, 1), 
+                                           from = range(loan_data$DebtToIncomeRatio, 
+                                                        na.rm = TRUE)),
+                                   1)) +
+  labs(y = "Loan original amount",
+       x = "Borrower rate",
+       color = "Debt to income ratio") +
+  theme_minimal()
+
+term_plot <- ggplot(loan_data) +
+  geom_point(aes(BorrowerRate, 
+                 LoanOriginalAmount, 
+                 color = cut(Term, c(0, 12, 36, 60))),
+             size = 0.5,
+             alpha = 0.2) +
+  scale_color_brewer(palette = "Oranges",
+                     labels = c("12 months", "36 months", "60 months")) +
+  labs(y = "Loan original amount",
+       x = "Borrower rate",
+       color = "Term") +
+  theme_minimal()
+
+grid.arrange(income_plot, origination_plot, debt_plot, term_plot, 
+             ncol = 2,
+             top = "Loan original amount vs borrower rate for different auxillary features")
 
 ```
 
