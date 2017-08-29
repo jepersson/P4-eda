@@ -1,15 +1,6 @@
 Prosper loan data analysis by Eric Persson
 ========================================================
 
-> **Tip**: You will see quoted sections like this throughout the template to
-help you construct your report. Make sure that you remove these notes before
-you finish and submit your project!
-
-> **Tip**: One of the requirements of this project is that your code follows
-good formatting techniques, including limiting your lines to 80 characters or
-less. If you're using RStudio, go into Preferences \> Code \> Display to set up
-a margin line to help you keep track of this guideline!
-
 ```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
 # Load all of the packages that you end up using in your analysis in this code
 # chunk.
@@ -120,22 +111,15 @@ loan_data$IncomeRange <- factor(loan_data$IncomeRange,
 
 For this exploratory data analysis we are having a look at loan listings data 
 from a web service called [Prosper](https://www.prosper.com) to try to figure
-out who are using the service, why they are taking a loan, and what eventually
-happens to that loan.
+out who are using the service, why they are taking a loan, and how much that
+loan costs.
 
 Since the original data set contains over 80 variables I have picked out a subset
-which we will use for our analysis based on the above stated questions.
+which we will use for our analysis loosely based on the above stated questions.
 Initially some light data wrangling was also made to either make the data set
 more readable and to handle NA values.
 
 # Univariate Plots Section
-
-> **Tip**: In this section, you should perform some preliminary exploration of
-your data set. Run some summaries of the data and create univariate plots to
-understand the structure of the individual variables in your data set. Don't
-forget to add a comment after each plot or closely-related group of plots!
-There should be multiple code chunks and text sections; the first one below is
-just to help you get started.
 
 Let's start by having a look at the summary statistics for the data to see what
 we have to work with.
@@ -147,7 +131,7 @@ summary(loan_data)
 ```
 
 Based on the above numerical data our typical loan taker is a first time prosper
-user with equal possibility to be a homeowner or not, taking a loan over 36 to 40
+user with equal possibility to be a homeowner as not, taking a loan over 36 to 40
 months with an interest rate of around 19%. The typical size of a loan is $6500.
 
 Next we plot the numbers of occurrences for the nominal variables in our data set.
@@ -162,8 +146,7 @@ ranked_employment_statuses <- loan_data %>%
   arrange(desc(Count))
 ggplot(ranked_employment_statuses) +
   geom_col(aes(reorder(EmploymentStatus, Count), Count)) +
-  labs(title = "Ranked Employment Statuses",
-       x = "Employment Status ordered by Count") +
+  labs(x = "Employment Status ordered by Count") +
   coord_flip()
 
 # Create dataframe with counts for each type of occupation in the data set,
@@ -176,30 +159,24 @@ top_10_occupations <- loan_data %>%
   top_n(10, Count)
 ggplot(top_10_occupations) +
   geom_col(aes(reorder(Occupation, Count), Count)) +
-  labs(title = "Top 10 Occupations",
-       x = "Occupation ordered by Count") +
+  labs(x = "Occupation ordered by Count") +
   coord_flip()
 
-# Create a dataframe with counts for each different type of loan status. Plot
-# the resulting dataframe according to the order given by the limits parameter
-# in the scale_x_limits layer.
-# series$type2 <- factor(series$type, levels = c('c', 'b', 'd', 'a'))
+# Create a dataframe with counts for each different type of loan status. 
 loan_statuses <- loan_data %>% 
   group_by(LoanStatus) %>% 
   summarise(Count = n())
 ggplot(loan_statuses) +
   geom_col(aes(LoanStatus, Count)) +
-  labs(title = "Loan Statuses") +
   coord_flip()
 
 # Create and plot a dataframe with the counts for all the exsisting income
-# ranges in the data set. The labels are tilted by 45 degree for readability.
+# ranges in the data set. The labels are tilted by 20 degrees for readability.
 count_income_ranges <- loan_data %>% 
   group_by(IncomeRange) %>% 
   summarise(Count = n())
 ggplot(count_income_ranges) +
   geom_col(aes(IncomeRange, Count)) +
-  labs(title = "Income Ranges") +
   theme(axis.text.x=element_text(angle=20, vjust=0.5)) +
   coord_flip()
 
@@ -211,17 +188,10 @@ ranked_listing_categories <- loan_data %>%
   arrange(desc(Count))
 ggplot(ranked_listing_categories) +
   geom_col(aes(reorder(ListingCategory, Count), Count)) +
-  labs(title = "Ranked Listing Categories",
-       x = "Listing Categories ordered by count") +
+  labs(x = "Listing Categories ordered by count") +
   coord_flip()
 
 ```
-
-> **Tip**: Make sure that you leave a blank line between the start / end of
-each code block and the end / start of your Markdown text so that it is
-formatted nicely in the knitted text. Note as well that text on consecutive
-lines is treated as a single space. Make sure you have a blank line between
-your paragraphs so that they too are formatted for easy readability.
 
 From the above plots we can see that most of the loan takers are employed but
 the type of occupation is seldom given with the vague "Professional" and "Other"
@@ -232,8 +202,8 @@ charged-off loans.
 Further, the income range looks to be fairly normalized with an expected value
 somewhere around $50,000. Lastly, we have the listing categories for the loan
 listings and we can see that roughly half of the the reasons given for the loans
-through prosper is debt consolidation followed by the rather vague "Not
-Available" and "Other" categories in the top three.
+through prosper is debt consolidation followed by the once again rather vague
+"Not Available" and "Other" categories in the top three.
 
 Now, after have gone through and had an initial look at all the variables in the
 data set let's revisit and plot some of the more interesting numerical variables
@@ -282,7 +252,7 @@ ActiveListings <- Delta %>%
 ggplot(ActiveListings) + 
   geom_line(aes(Date, Count)) 
 
-# Calculating and plotting monthly active listings changes
+# Calculating and plotting monthly active listings changes over time
 MonthlyActiveListings <- ActiveListings %>% 
   group_by(Month = floor_date(Date, "month")) %>% 
   summarise(Delta = sum(DeltaCount))
@@ -327,23 +297,21 @@ ggplot(loan_data) +
 ```
 
 By plotting the above values we discovered some interesting facts such as that
-the loan term probably are artificially locked at one, three or five years. We
-also saw that the usual amounts being borrowed are grouped around even $5000
-numbers with a maximum at $35000. Lastly, the loan origination dates clearly
-shows effects from the 2008 recession and also an peak in new loans later years
-which we still aren't able to explain. Let's proceed with some further analysis
-before investigating inter-variable relations in the bivariate section.
+the loan term probably are locked at one, three or five years. We also saw that
+the usual amounts being borrowed are grouped around even $5000 numbers with a
+maximum at $35000. Lastly, the loan origination dates clearly shows effects from
+the 2008 recession and also an peak in new loans later years which we still
+aren't able to explain. 
+
+Let's proceed with going over our findings once more before investigating
+inter-variable relations in the bivariate section.
 
 # Univariate Analysis
-
-> **Tip**: Now that you've completed your univariate explorations, it's time to
-reflect on and summarize what you've found. Use the questions below to help you
-gather your observations and add your own if you have other thoughts!
 
 ### What is the structure of your dataset?
 
 The original data set contains more variables than what we could practically
-cover in one go so to narrow them down we posed some questions about the data.
+cover in one go, so to narrow them down we posed some questions about the data.
 Let's revisit these questions to see if we made any discoveries worth noting
 already.
 
@@ -353,7 +321,7 @@ mentioned:
 * Employment Status
 * Occupations
 * Income Ranges
-* Is Borrower Homeowner
+* IsBorrowerHomeowner
 * etc.
 
 Based on the summary data and plots presented, our typical loan taker is
@@ -378,16 +346,13 @@ investigation into your feature(s) of interest?
 Loan origination dates vs. closed dates together with the data on overdue,
 defaulted, or charged-off loans. Using these features together with the above
 calculated active loans variable it would be interesting to dive deeper and see
-how, and when, the 2008 recession affected the loans taken. Further, since it
-seems like the service has enjoyed some explosive growth going in to 2014 it
-would be very interesting to see what these added loans are and perhaps why they
-have increased.
+how, and when, the 2008 recession affected the loans taken. 
 
 Another features worth looking in to is the borrower rates which mostly pikes my
 interest due to the unclear form of the distribution. Investigating what
 variables are correlated and how they affect this blob of values centered
 somewhere around 0.2 would be very interesting and perhaps a good candidate for
-a regression model and analysis.
+analysis by creating a regression model.
 
 ### Did you create any new variables from existing variables in the dataset?
 
@@ -409,12 +374,6 @@ variables where NAs where present this in order to ease calculations in the
 analysis while not influencing other statistical measures.
 
 # Bivariate Plots Section
-
-> **Tip**: Based on what you saw in the univariate plots, what relationships
-between variables might be interesting to look at in this section? Don't limit
-yourself to relationships between a main output feature and one of the
-supporting variables. Try to look at relationships between supporting variables
-as well.
 
 To continue follow our interesting findings regarding the effects of the 2008
 recession on active loan volumes let's plot the change in loan statuses and 
@@ -494,7 +453,7 @@ ggpairs(subset(loan_data,
 Following our slight drawback from analyzing the continuous variables we instead 
 focus on the categorical ones. Here we can start to see some slight trends in 
 the relationships between all our supporting variables and the borrower rate, 
-however not one single variable seems significant enough to prove anything. 
+however not one single variable seems significant enough to draw any conclusions. 
 
 ```{r echo=FALSE, warning=FALSE, fig.align="center", Bivariate_Plots_3}
 
@@ -545,9 +504,6 @@ ggplot(loan_data) +
 
 # Bivariate Analysis
 
-> **Tip**: As before, summarize what you found in your bivariate explorations
-here. Use the questions below to guide your discussion.
-
 ### Talk about some of the relationships you observed in this part of the \
 investigation. How did the feature(s) of interest vary with other features in \
 the data set?
@@ -583,24 +539,14 @@ following multivariate section.
 
 ### Did you observe any interesting relationships between the other features \
 (not the main feature(s) of interest)?
-
 ### What was the strongest relationship you found?
 
 The only really strong relationship I could find in the above analysis were the 
 relation between the original amount of the loan and monthly payments. This does 
 seem a bit trivial, since you could come to this conclusion without any 
-statistical analysis at all but since I haven't really done any analysis with 
-real contemporary data like this it does feel kind of refreshing with a different 
-challenge compared to the orchestrated assignments I experienced as a student.
+statistical analysis at all but it could be worth mentioning.
 
 # Multivariate Plots Section
-
-> **Tip**: Now it's time to put everything together. Based on what you found in
-the bivariate plots section, create a few multivariate plots to investigate
-more complex interactions between variables. Make sure that the plots that you
-create here are justified by the plots you explored in the previous section. If
-you plan on creating any mathematical models, this is the section where you
-will do that.
 
 First we take a look at the loan original amount and borrower rate in relation 
 to income range, term, debt to income ratio, and if the borrower is a homeowner 
@@ -608,12 +554,15 @@ or not.
 
 ```{r echo=FALSE, warning=FALSE, fig.align="center", Multivariate_Plots_1}
 
+# Borrower rate density by IncomeRange
 ggplot(loan_data) +
   geom_density(aes(BorrowerRate, color = IncomeRange))
 
+# Borrower rate density by loan term 
 ggplot(loan_data) +
   geom_density(aes(BorrowerRate, color = cut(Term, c(0, 12, 36, 60))))
 
+# Borrower rate density by DebtToIncomeRatio
 ggplot(loan_data) +
   geom_density(aes(BorrowerRate, 
                    color = cut(DebtToIncomeRatio,
@@ -624,23 +573,25 @@ ggplot(loan_data) +
                                  10.010)))) +
   labs(color = "DebtToIncomeRatio")
 
+# Borrower rate density for homeowner vs non-homeowner
 ggplot(loan_data) +
   geom_density(aes(BorrowerRate, color = IsBorrowerHomeowner))
 
 ```
 
-Next, we also take a look at some borrower density curves for the same variables 
-as above. 
+Next we have a look at Borrower rates vs loan original amount with color coding
+for some different secondary variables.
 
 ```{r echo=FALSE, warning=FALSE, fig.align="center", Multivariate_Plots_2}
 
-# Plotting facet for borrower rate histograms by income range
+# Plotting BorrowerRate vs Loan original amounts colored by IncomeRange
 ggplot(loan_data) +
   geom_point(aes(BorrowerRate, LoanOriginalAmount, color = IncomeRange),
              size = 0.5,
              alpha = 0.2) +
   scale_color_brewer(palette = "Greens")
 
+# Plotting BorrowerRate vs Loan original amounts colored by LoanOriginationDate
 ggplot(loan_data) +
   geom_point(aes(BorrowerRate, 
                  LoanOriginalAmount, 
@@ -661,6 +612,7 @@ ggplot(loan_data) +
                                 "2012",
                                 "2013"))
 
+# Plotting BorrowerRate vs Loan original amounts colored by DebtToIncomeRatio
 ggplot(loan_data) +
   geom_point(aes(BorrowerRate, LoanOriginalAmount, color = DebtToIncomeRatio),
              size = 0.5,
@@ -685,6 +637,7 @@ ggplot(loan_data) +
                                                         na.rm = TRUE)),
                                    1))
 
+# Plotting BorrowerRate vs Loan original amounts colored by Term
 ggplot(loan_data) +
   geom_point(aes(BorrowerRate, 
                  LoanOriginalAmount, 
@@ -733,7 +686,8 @@ rates having peaks between 0.2 and 0.1. The only thing standing out is that the
 fourth quartile (0.32, 10] almost has two equally high peaks at both 0.2 and
 0.3. I believe this might be stemming from the fact that this span is the
 longest of the four quartiles. Most likely the distribution for the lower and
-upper half of this quartile has different distributions.
+upper half of this quartile has different distributions. (The fact that values
+over 10 is all clumped together at this value is also definitely a factor.)
 
 The last graph, showing the rates divided by home owner or not has start out 
 with as we might expect with homeowner density being higher at lower interest
@@ -744,7 +698,7 @@ not seem to affect the rate at all. Perhaps loan-takers given these kind of rate
 has some other circumstances overshadowing the potential extra security being a
 homeowner could bring.
 
-### OPTIONAL: Did you create any models with your dataset? Discuss the \
+### Did you create any models with your dataset? Discuss the \
 strengths and limitations of your model.
 
 My initial plan was to try create a linear model to predict borrower rates based
@@ -780,6 +734,12 @@ ggplot(MonthlyActiveListings) +
 
 ### Description One
 
+The first plot depicts the monthly deltas for active loan listings. The reason I
+choose this is due to how clear the effect from the 2008 recession can be seen.
+Not only did the increase of loans take a deep dive in the early half of 2008
+but the number of loans actually decreased pretty much all the way into 2011. I
+don't think any deeper conclusions can be drawn from this graph but it might be
+a good observation of how the market has looked like coming into the 2010's.
 
 ### Plot Two
 ```{r echo=FALSE, warning=FALSE, fig.align="center", Plot_Two}
@@ -797,9 +757,20 @@ ggplot(loan_data) +
 
 ### Description Two
 
+The second graph I choose was the density curve for borrower rates colored by
+term length. The reason for this is how the figure expresses the effect future
+insecurity has on decisions today. The variance is high for both 12 and 36 month
+loans but when the term increases further up to 60 months it shrinks. It is as
+if the insecurity of the future makes the borrowers desicion for the borrower
+rate more uniform since there is less individual data they can count with.
+
+I can also add that unlike the other two graphs, which I can image that I could
+have come up with even before taking the Udacity EDA course, this graph was
+something new I hadn't seen, or perhaps paid attention to, during my years at
+university.
 
 ### Plot Three
-```{r echo=FALSE, warning=FALSE, fig.align="center", fig.width=5, fig.height=3, Plot_Three}
+```{r echo=FALSE, warning=FALSE, fig.align="center", fig.width=12, fig.height=7, Plot_Three}
 
 income_plot <- ggplot(loan_data) +
   geom_point(aes(BorrowerRate, LoanOriginalAmount, color = IncomeRange),
@@ -809,6 +780,7 @@ income_plot <- ggplot(loan_data) +
   labs(y = "Loan original amount",
        x = "Borrower rate",
        color = "Income range") +
+  guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   theme_minimal()
 
 origination_plot <- ggplot(loan_data) +
@@ -833,6 +805,7 @@ origination_plot <- ggplot(loan_data) +
   labs(y = "Loan original amount",
        x = "Borrower rate",
        color = "Origination date") +
+  guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   theme_minimal()
 
 debt_plot <- ggplot(loan_data) +
@@ -874,15 +847,18 @@ term_plot <- ggplot(loan_data) +
   labs(y = "Loan original amount",
        x = "Borrower rate",
        color = "Term") +
+  guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   theme_minimal()
 
 grid.arrange(income_plot, origination_plot, debt_plot, term_plot, 
              ncol = 2,
-             top = "Loan original amount vs borrower rate for different auxillary features")
+             top = "Loan original amount vs borrower rate for different auxiliary features")
 
 ```
 
 ### Description Three
+
+The third graph, and this might be cheating, is actually a combination of the four different graphs depicting borrower rates vs loan original amounts with different coloring for the distribution of income range, origination date, debt to income ratio, and term for the loans plotted. Even though there weren't any major breakthough due to this figure this time, it do show that by trying combination after combination of different variables patterns are eventually found and sometimes you stumble over something unexpected. (In this case the origination date graph.)
 
 ------
 
