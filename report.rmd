@@ -858,16 +858,23 @@ grid.arrange(income_plot, origination_plot, debt_plot, term_plot,
 
 ### Description Three
 
-The third graph, and this might be cheating, is actually a combination of the four different graphs depicting borrower rates vs loan original amounts with different coloring for the distribution of income range, origination date, debt to income ratio, and term for the loans plotted. Even though there weren't any major breakthough due to this figure this time, it do show that by trying combination after combination of different variables patterns are eventually found and sometimes you stumble over something unexpected. (In this case the origination date graph.)
+The third graph, and this might be cheating, is actually a combination of the
+four different graphs depicting borrower rates vs loan original amounts with
+different coloring for the distribution of income range, origination date, debt
+to income ratio, and term for the loans plotted. Even though there weren't any
+major breakthough due to this figure this time, it do show that by trying
+combination after combination of different variables patterns are eventually
+found and sometimes you stumble over something unexpected. (In this case the
+origination date graph with a wierd pattern.)
 
 ------
 
 # Reflection
 
-> **Tip**: Here's the final step! Reflect on the exploration you performed and
-the insights you found. What were some of the struggles that you went through?
-What went well? What was surprising? Make sure you include an insight into
-future work that could be done with the data set.
+This being the first time I had familiarized myself with R and Rstudio I do think that the analysis might have been suffering from time to time while focusing on how to use the tools rather than on what I was doing. Excuses aside, it was however a really interesting and fun exploration into the world of p2p lending. 
 
-> **Tip**: Don't forget to remove this, and the other **Tip** sections before
-saving your final work and knitting the final report!
+I believe somewhere halfway through I did realize that trying to answer both
+questions regarding the lenders and the loans with less than 20 variables were
+harder than I first thought. Rather than trying to answer too much it might have been better to focus on just one of those two aspects since the amount of information need to fully explore just one aspect were more than I first had thought. 
+
+I definetely think that going back and look at the prosper rating and a few more financial variables can result in a more in depth analysis of what drives the rating. It would also be a good canditate for creating a model to fit to the data and validate it against the already exsisting ratings which sounds like heaps of fun.
