@@ -761,7 +761,7 @@ The second graph I choose was the density curve for borrower rates colored by
 term length. The reason for this is how the figure expresses the effect future
 insecurity has on decisions today. The variance is high for both 12 and 36 month
 loans but when the term increases further up to 60 months it shrinks. It is as
-if the insecurity of the future makes the borrowers desicion for the borrower
+if the insecurity of the future makes the borrowers decision for the borrower
 rate more uniform since there is less individual data they can count with.
 
 I can also add that unlike the other two graphs, which I can image that I could
@@ -862,10 +862,10 @@ The third graph, and this might be cheating, is actually a combination of the
 four different graphs depicting borrower rates vs loan original amounts with
 different coloring for the distribution of income range, origination date, debt
 to income ratio, and term for the loans plotted. Even though there weren't any
-major breakthough due to this figure this time, it do show that by trying
+major breakthrough due to this figure this time, it do show that by trying
 combination after combination of different variables patterns are eventually
 found and sometimes you stumble over something unexpected. (In this case the
-origination date graph with a wierd pattern.)
+origination date graph with a weird pattern.)
 
 ------
 
@@ -877,4 +877,4 @@ I believe somewhere halfway through I did realize that trying to answer both
 questions regarding the lenders and the loans with less than 20 variables were
 harder than I first thought. Rather than trying to answer too much it might have been better to focus on just one of those two aspects since the amount of information need to fully explore just one aspect were more than I first had thought. 
 
-I definetely think that going back and look at the prosper rating and a few more financial variables can result in a more in depth analysis of what drives the rating. It would also be a good canditate for creating a model to fit to the data and validate it against the already exsisting ratings which sounds like heaps of fun.
+I definitely think that going back and look at the prosper rating and a few more financial variables can result in a more in depth analysis of what drives the rating. It would also be a good candidate for creating a model to fit to the data and validate it against the already existing ratings which sounds like heaps of fun.
