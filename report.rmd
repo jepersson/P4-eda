@@ -107,6 +107,8 @@ loan_data$IncomeRange <- factor(loan_data$IncomeRange,
                                           "$50,000-74,999",
                                           "$75,000-99,999",
                                           "$100,000+"))
+loan_data$Term <- factor(loan_data$Term)
+
 ```
 
 For this exploratory data analysis we are having a look at loan listings data 
@@ -191,6 +193,14 @@ ggplot(ranked_listing_categories) +
   labs(x = "Listing Categories ordered by count") +
   coord_flip()
 
+# Create and plot a dataframe with the counts for all exsisting listing
+# categories in the data set.
+terms <- loan_data %>% 
+  group_by(Term) %>% 
+  summarise(Count = n())
+ggplot(terms) +
+  geom_col(aes(Term, Count))
+
 ```
 
 From the above plots we can see that most of the loan takers are employed but
@@ -270,11 +280,6 @@ ggplot(MonthlyOriginations) +
 ggplot(loan_data) +
   geom_histogram(aes(LoanOriginalAmount), bins = 35) +
   scale_x_continuous(breaks = seq(0, 35000, 5000))
-
-# Loan term lenghts 
-ggplot(loan_data) +
-  geom_histogram(aes(Term), bins = 5) +
-  scale_x_continuous(breaks = seq(0, 60, 12))
 
 # Monthly Loan Payments
 ggplot(loan_data) +
@@ -389,6 +394,7 @@ ggplot(subset(loan_data,
                  stat = "bin",
                  bins = 100,
                  position = "fill") +
+  labs(y = "Proportion") + 
   scale_fill_manual(values = c("#c7e9c0",
                                "#74c476", 
                                "#238b45",
@@ -399,6 +405,7 @@ ggplot(loan_data) +
   geom_histogram(aes(ListingCreationDate, fill = ListingCategory),
                  bins = 100, 
                  position = "fill") +
+  labs(y = "Proportion") + 
   scale_fill_manual(values = c("#edf8e9",
                                "#c7e9c0",
                                "#a1d99b",
@@ -457,10 +464,9 @@ however not one single variable seems significant enough to draw any conclusions
 
 ```{r echo=FALSE, warning=FALSE, fig.align="center", Bivariate_Plots_3}
 
-# Plotting the term(cut into categories) vs given borrower rate
+# Plotting the term vs given borrower rate
 ggplot(loan_data) +
-  geom_boxplot(aes(cut(Term, c(0, 12, 36, 60)),
-                 BorrowerRate)) +
+  geom_boxplot(aes(Term, BorrowerRate)) +
   coord_flip()
 
 # Plotting IncomeRange vs borrower rate
@@ -560,7 +566,7 @@ ggplot(loan_data) +
 
 # Borrower rate density by loan term 
 ggplot(loan_data) +
-  geom_density(aes(BorrowerRate, color = cut(Term, c(0, 12, 36, 60))))
+  geom_density(aes(BorrowerRate, color = Term))
 
 # Borrower rate density by DebtToIncomeRatio
 ggplot(loan_data) +
@@ -571,7 +577,8 @@ ggplot(loan_data) +
                                  0.22, 
                                  0.32, 
                                  10.010)))) +
-  labs(color = "DebtToIncomeRatio")
+  labs(color = "DebtToIncomeRatio") +
+  scale_color_brewer(palette = "Reds")
 
 # Borrower rate density for homeowner vs non-homeowner
 ggplot(loan_data) +
@@ -641,7 +648,7 @@ ggplot(loan_data) +
 ggplot(loan_data) +
   geom_point(aes(BorrowerRate, 
                  LoanOriginalAmount, 
-                 color = cut(Term, c(0, 12, 36, 60))),
+                 color = Term),
              size = 0.5,
              alpha = 0.2) +
   scale_color_brewer(palette = "Oranges")
@@ -727,7 +734,9 @@ make sure you justify why you chose each plot by describing what it shows.
 
 ggplot(MonthlyActiveListings) + 
   geom_line(aes(Month, Delta)) +
-  labs(title = "Monthly deltas in active loan listings") +
+  labs(title = "Monthly deltas in active loan listings",
+       y = "Delta (in number of listings)",
+       x = "Months") +
   theme_minimal()
 
 ```
@@ -745,10 +754,10 @@ a good observation of how the market has looked like coming into the 2010's.
 ```{r echo=FALSE, warning=FALSE, fig.align="center", Plot_Two}
 
 ggplot(loan_data) +
-  geom_density(aes(BorrowerRate, color = cut(Term, c(0, 12, 36, 60)))) +
+  geom_density(aes(BorrowerRate, color = Term)) +
   labs(title = "Borrower rate density by term length",
        y = "Density",
-       x = "Borrower rate",
+       x = "Borrower rate (as a factor of 1)",
        color = "Term") + 
   scale_color_hue(labels = c("12 months", "36 months", "60 months")) +
   theme_minimal()
@@ -777,8 +786,8 @@ income_plot <- ggplot(loan_data) +
              size = 0.5,
              alpha = 0.2) +
   scale_color_brewer(palette = "Greens") +
-  labs(y = "Loan original amount",
-       x = "Borrower rate",
+  labs(y = "Loan original amount (in dollars)",
+       x = "Borrower rate (as a factor of 1)",
        color = "Income range") +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   theme_minimal()
@@ -791,7 +800,6 @@ origination_plot <- ggplot(loan_data) +
                                                    "year"))))),
              size = 0.5,
              alpha = 0.2) +
-  labs(color = "LoanOriginationDate") +
   scale_color_brewer(palette = "Blues",
                      labels = c("2005",
                                 "2006",
@@ -802,8 +810,8 @@ origination_plot <- ggplot(loan_data) +
                                 "2011",
                                 "2012",
                                 "2013")) +
-  labs(y = "Loan original amount",
-       x = "Borrower rate",
+  labs(y = "Loan original amount (in dollars)",
+       x = "Borrower rate (as a factor of 1)",
        color = "Origination date") +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   theme_minimal()
@@ -831,21 +839,21 @@ debt_plot <- ggplot(loan_data) +
                                            from = range(loan_data$DebtToIncomeRatio, 
                                                         na.rm = TRUE)),
                                    1)) +
-  labs(y = "Loan original amount",
-       x = "Borrower rate",
+  labs(y = "Loan original amount (in dollars)",
+       x = "Borrower rate (as a factor of 1)",
        color = "Debt to income ratio") +
   theme_minimal()
 
 term_plot <- ggplot(loan_data) +
   geom_point(aes(BorrowerRate, 
                  LoanOriginalAmount, 
-                 color = cut(Term, c(0, 12, 36, 60))),
+                 color = Term),
              size = 0.5,
              alpha = 0.2) +
   scale_color_brewer(palette = "Oranges",
                      labels = c("12 months", "36 months", "60 months")) +
-  labs(y = "Loan original amount",
-       x = "Borrower rate",
+  labs(y = "Loan original amount (in dollars)",
+       x = "Borrower rate (as a factor of 1)",
        color = "Term") +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   theme_minimal()
